@@ -1,0 +1,36 @@
+name: Python tests
+
+# Run this workflow on pushes and pull requests.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    # Use the latest Ubuntu runner.
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository contents.
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      # Install and configure Python 3.14 for the job.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      # Install uv so the project uses the same package manager as local development.
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      # Install the project and dev dependencies from the pyproject.toml file.
+      - name: Install dependencies
+        run: |
+          ~/.local/bin/uv sync --dev
+
+      # Run the project test suite with pytest.
+      - name: Run tests
+        run: ~/.local/bin/uv run pytest tests -q
