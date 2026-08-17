@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-data-pipeline"
+version = "0.1.0"
+description = "Reusable time-series ingestion and cleaning pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+[project.optional-dependencies]
+docs = [
+    "ipykernel>=6.29",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+    "python-dotenv>=1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_data_pipeline"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
