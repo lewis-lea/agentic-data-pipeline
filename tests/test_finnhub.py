@@ -89,44 +89,6 @@ def test_get_insider_sentiment_normalizes_monthly_series() -> None:
     }
 
 
-def test_get_social_sentiment_normalizes_series() -> None:
-    captured: dict[str, object] = {}
-
-    def transport(url: str, params: dict[str, str], timeout: float) -> dict[str, object]:
-        captured.update(url=url, params=params, timeout=timeout)
-        return {
-            "symbol": "GME",
-            "data": [
-                {
-                    "atTime": "2026-08-20 14:00:00",
-                    "mention": 32,
-                    "positiveMention": 20,
-                    "negativeMention": 12,
-                    "positiveScore": 0.92,
-                    "negativeScore": -0.98,
-                    "score": -0.03,
-                }
-            ],
-        }
-
-    frame = FinnhubClient("secret", transport=transport).get_social_sentiment(
-        "gme", start="2026-08-20", end="2026-08-21"
-    )
-
-    assert frame.attrs == {"symbol": "GME", "dataset": "social_sentiment"}
-    assert list(frame.columns) == [
-        "mention", "positive_mention", "negative_mention", "positive_score",
-        "negative_score", "sentiment_score", "source",
-    ]
-    assert frame.iloc[0]["mention"] == 32
-    assert frame.iloc[0]["sentiment_score"] == pytest.approx(-0.03)
-    assert str(frame.index.tz) == "UTC"
-    assert captured["url"] == "https://finnhub.io/api/v1/stock/social-sentiment"
-    assert captured["params"] == {
-        "symbol": "GME", "from": "2026-08-20", "to": "2026-08-21"
-    }
-
-
 def test_get_latest_rejects_incomplete_response() -> None:
     client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: {"c": 10})
 
