@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from statsmodels.tsa.stattools import acf, adfuller, kpss, pacf
 from ta.momentum import RSIIndicator
 from ta.trend import EMAIndicator, MACD, SMAIndicator
@@ -13,6 +14,9 @@ from ta.volatility import AverageTrueRange, BollingerBands
 from ta.volume import OnBalanceVolumeIndicator
 
 from agentic_data_pipeline.types import validate_market_data
+
+DEFAULT_BENCHMARK = "HMWO.L"
+TRADING_DAYS_PER_YEAR = 252
 
 
 def add_stock_metrics(
@@ -24,13 +28,7 @@ def add_stock_metrics(
     momentum_window: int = 20,
     rsi_window: int = 14,
 ) -> pd.DataFrame:
-    """Return market data with commonly used stock time-series metrics appended.
-
-    The input must satisfy the repository's canonical market-data schema. The
-    returned frame preserves the original metadata in ``DataFrame.attrs``.
-    Metrics are computed from the ``close`` series unless an OHLCV indicator
-    naturally requires other columns.
-    """
+    """Return market data with commonly used stock time-series metrics appended."""
 
     validate_market_data(frame)
     if min(short_window, long_window, volatility_window, momentum_window, rsi_window) <= 0:
@@ -93,12 +91,7 @@ def time_series_diagnostics(
     *,
     nlags: int = 20,
 ) -> dict[str, Any]:
-    """Compute traditional statsmodels diagnostics on log returns.
-
-    Returns ADF and KPSS stationarity tests plus autocorrelation and partial
-    autocorrelation arrays. Missing values from the initial return calculation
-    are removed before diagnostics are evaluated.
-    """
+    """Compute traditional statsmodels diagnostics on log returns."""
 
     validate_market_data(frame)
     if nlags <= 0:
@@ -130,3 +123,132 @@ def time_series_diagnostics(
         "acf": acf(returns, nlags=effective_lags, fft=True).tolist(),
         "pacf": pacf(returns, nlags=effective_lags, method="ywm").tolist(),
     }
+
+
+def benchmark_statistics(
+    asset: pd.DataFrame,
+    benchmark: pd.DataFrame,
+    *,
+    periods_per_year: int = TRADING_DAYS_PER_YEAR,
+) -> dict[str, float | int | str]:
+    """Return headline statistics for an asset relative to a benchmark.
+
+    The two series are aligned on common timestamps and compared using simple
+    close-to-close returns. Alpha and beta come from an OLS regression of asset
+    returns on benchmark returns. Annualized values assume ``periods_per_year``
+    observations per year (252 for daily trading data by default).
+    """
+
+    aligned = _aligned_returns(asset, benchmark)
+    if len(aligned) < 3:
+        raise ValueError("not enough overlapping observations for benchmark statistics")
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+
+    model = sm.OLS(aligned["asset_return"], sm.add_constant(aligned["benchmark_return"])).fit()
+    alpha_period = float(model.params["const"])
+    beta = float(model.params["benchmark_return"])
+    active = aligned["asset_return"] - aligned["benchmark_return"]
+    tracking_error_period = float(active.std(ddof=1))
+    mean_active = float(active.mean())
+
+    benchmark_up = aligned["benchmark_return"] > 0
+    benchmark_down = aligned["benchmark_return"] < 0
+    upside_capture = _capture_ratio(aligned, benchmark_up)
+    downside_capture = _capture_ratio(aligned, benchmark_down)
+
+    asset_cumulative = (1.0 + aligned["asset_return"]).cumprod()
+    benchmark_cumulative = (1.0 + aligned["benchmark_return"]).cumprod()
+    asset_drawdown = asset_cumulative / asset_cumulative.cummax() - 1.0
+    benchmark_drawdown = benchmark_cumulative / benchmark_cumulative.cummax() - 1.0
+
+    information_ratio = (
+        mean_active / tracking_error_period * np.sqrt(periods_per_year)
+        if tracking_error_period > 0
+        else float("nan")
+    )
+
+    return {
+        "benchmark": str(benchmark.attrs.get("symbol", DEFAULT_BENCHMARK)),
+        "observations": int(len(aligned)),
+        "beta": beta,
+        "alpha_per_period": alpha_period,
+        "alpha_annualized": float((1.0 + alpha_period) ** periods_per_year - 1.0),
+        "r_squared": float(model.rsquared),
+        "correlation": float(aligned["asset_return"].corr(aligned["benchmark_return"])),
+        "excess_return_annualized": float(mean_active * periods_per_year),
+        "tracking_error_annualized": float(tracking_error_period * np.sqrt(periods_per_year)),
+        "information_ratio": float(information_ratio),
+        "upside_capture": float(upside_capture),
+        "downside_capture": float(downside_capture),
+        "max_drawdown": float(asset_drawdown.min()),
+        "benchmark_max_drawdown": float(benchmark_drawdown.min()),
+        "relative_max_drawdown": float(asset_drawdown.min() - benchmark_drawdown.min()),
+    }
+
+
+def add_benchmark_metrics(
+    asset: pd.DataFrame,
+    benchmark: pd.DataFrame,
+    *,
+    window: int = 90,
+) -> pd.DataFrame:
+    """Append rolling benchmark-relative features to an asset DataFrame.
+
+    Adds benchmark return, excess return, rolling correlation, rolling beta,
+    rolling alpha and rolling R-squared. Output is restricted to timestamps
+    shared by both input series and preserves the asset metadata.
+    """
+
+    if window < 2:
+        raise ValueError("window must be at least 2")
+    aligned = _aligned_returns(asset, benchmark, include_close=True)
+    result = asset.loc[aligned.index].copy()
+    result.attrs = dict(asset.attrs)
+    result.attrs["benchmark"] = str(benchmark.attrs.get("symbol", DEFAULT_BENCHMARK))
+
+    asset_returns = aligned["asset_return"]
+    benchmark_returns = aligned["benchmark_return"]
+    result["benchmark_return"] = benchmark_returns
+    result["excess_return"] = asset_returns - benchmark_returns
+    result[f"rolling_correlation_{window}"] = asset_returns.rolling(window).corr(benchmark_returns)
+
+    covariance = asset_returns.rolling(window).cov(benchmark_returns)
+    benchmark_variance = benchmark_returns.rolling(window).var()
+    rolling_beta = covariance / benchmark_variance
+    result[f"rolling_beta_{window}"] = rolling_beta
+    result[f"rolling_alpha_{window}"] = (
+        asset_returns.rolling(window).mean()
+        - rolling_beta * benchmark_returns.rolling(window).mean()
+    )
+    result[f"rolling_r_squared_{window}"] = result[f"rolling_correlation_{window}"] ** 2
+    return result
+
+
+def _aligned_returns(
+    asset: pd.DataFrame,
+    benchmark: pd.DataFrame,
+    *,
+    include_close: bool = False,
+) -> pd.DataFrame:
+    validate_market_data(asset)
+    validate_market_data(benchmark)
+
+    columns: dict[str, pd.Series] = {
+        "asset_return": asset["close"].astype(float).pct_change(),
+        "benchmark_return": benchmark["close"].astype(float).pct_change(),
+    }
+    if include_close:
+        columns["asset_close"] = asset["close"].astype(float)
+        columns["benchmark_close"] = benchmark["close"].astype(float)
+    return pd.concat(columns, axis=1, join="inner").dropna(subset=["asset_return", "benchmark_return"])
+
+
+def _capture_ratio(aligned: pd.DataFrame, mask: pd.Series) -> float:
+    subset = aligned.loc[mask]
+    if subset.empty:
+        return float("nan")
+    benchmark_mean = float(subset["benchmark_return"].mean())
+    if benchmark_mean == 0:
+        return float("nan")
+    return float(subset["asset_return"].mean() / benchmark_mean)
