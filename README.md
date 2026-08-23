@@ -13,6 +13,22 @@ Dataset-level metadata such as `symbol` and `interval` is stored in
 `DataFrame.attrs`. The `source` remains a column so observations from multiple
 providers can be concatenated while retaining provenance.
 
+## Data timing semantics
+
+The two connectors provide observations with different timing semantics:
+
+- **yfinance provides historical end-of-day data** when used with the default
+  daily interval. Each row represents an OHLCV observation for a trading day.
+- **Finnhub provides the current/latest time point.** Its single-row result is a
+  snapshot of the current trading day: `open`, `high`, and `low` describe the
+  day so far, while the current market price is normalized into the canonical
+  `close` column.
+
+This distinction matters when combining the providers. A yfinance daily row is
+an end-of-day observation, whereas a Finnhub row obtained during market hours
+represents an in-progress trading day and should not be interpreted as a final
+daily close.
+
 ## Finnhub latest quotes
 
 Set your API token in the environment:
@@ -37,6 +53,8 @@ and percentage change are stored in `DataFrame.attrs`.
 
 ## Historical data with yfinance
 
+The default daily history represents end-of-day observations:
+
 ```python
 from agentic_data_pipeline.ingestion import YFinanceClient
 
@@ -45,7 +63,8 @@ print(history.tail())
 ```
 
 Because both providers return the same pandas representation, they can be
-combined directly:
+combined directly. Remember that `latest` may be an incomplete current-day
+observation if the market is still open:
 
 ```python
 import pandas as pd
