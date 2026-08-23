@@ -11,7 +11,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from agentic_data_pipeline.types import MarketQuote
+import pandas as pd
+
+from agentic_data_pipeline.types import create_market_data
 
 JsonObject = Mapping[str, Any]
 Transport = Callable[[str, Mapping[str, str], float], JsonObject]
@@ -51,8 +53,8 @@ class FinnhubClient:
         self.timeout = timeout
         self._transport = transport or self._request_json
 
-    def get_quote(self, symbol: str) -> MarketQuote:
-        """Fetch and standardize a real-time US stock quote."""
+    def get_latest(self, symbol: str) -> pd.DataFrame:
+        """Fetch the latest quote as a one-row canonical market-data DataFrame."""
 
         normalized_symbol = symbol.strip().upper()
         if not normalized_symbol:
@@ -64,8 +66,13 @@ class FinnhubClient:
         )
         return self._normalize_quote(payload, normalized_symbol)
 
+    def get_quote(self, symbol: str) -> pd.DataFrame:
+        """Compatibility alias for :meth:`get_latest`."""
+
+        return self.get_latest(symbol)
+
     @staticmethod
-    def _normalize_quote(payload: JsonObject, symbol: str) -> MarketQuote:
+    def _normalize_quote(payload: JsonObject, symbol: str) -> pd.DataFrame:
         if "error" in payload:
             raise FinnhubApiError(str(payload["error"]))
         required = ("c", "h", "l", "o", "pc", "t")
@@ -78,17 +85,29 @@ class FinnhubClient:
             timestamp = int(payload["t"])
             if timestamp <= 0:
                 raise ValueError("timestamp must be positive")
-            return MarketQuote(
-                timestamp=datetime.fromtimestamp(timestamp, tz=timezone.utc),
+            index = pd.DatetimeIndex(
+                [datetime.fromtimestamp(timestamp, tz=timezone.utc)],
+                name="timestamp",
+            )
+            raw = pd.DataFrame(
+                {
+                    "open": [float(payload["o"])],
+                    "high": [float(payload["h"])],
+                    "low": [float(payload["l"])],
+                    "close": [float(payload["c"])],
+                    "volume": [float("nan")],
+                },
+                index=index,
+            )
+            return create_market_data(
+                raw,
                 symbol=symbol,
-                current_price=float(payload["c"]),
-                open=float(payload["o"]),
-                high=float(payload["h"]),
-                low=float(payload["l"]),
-                previous_close=float(payload["pc"]),
-                change=_optional_float(payload.get("d")),
-                percent_change=_optional_float(payload.get("dp")),
                 source="finnhub",
+                metadata={
+                    "previous_close": float(payload["pc"]),
+                    "change": _optional_float(payload.get("d")),
+                    "percent_change": _optional_float(payload.get("dp")),
+                },
             )
         except (TypeError, ValueError, OverflowError) as exc:
             raise FinnhubApiError(f"invalid quote value: {exc}") from exc
