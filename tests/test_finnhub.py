@@ -1,4 +1,4 @@
-"""Tests for free-tier Finnhub ingestion and normalization."""
+"""Tests for Finnhub ingestion and normalization."""
 
 from datetime import datetime, timezone
 
@@ -43,6 +43,50 @@ def test_get_quote_is_compatibility_alias() -> None:
     client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: payload)
 
     assert client.get_quote("NVDA").equals(client.get_latest("NVDA"))
+
+
+def test_get_recommendation_trends_normalizes_monthly_series() -> None:
+    payload = [
+        {"buy": 4, "hold": 2, "period": "2026-07-01", "sell": 1, "strongBuy": 3, "strongSell": 0},
+        {"buy": 5, "hold": 1, "period": "2026-08-01", "sell": 0, "strongBuy": 4, "strongSell": 0},
+    ]
+    client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: payload)
+
+    frame = client.get_recommendation_trends("nvda")
+
+    assert frame.attrs == {"symbol": "NVDA", "frequency": "monthly"}
+    assert list(frame.columns) == [
+        "strong_buy", "buy", "hold", "sell", "strong_sell",
+        "analyst_count", "analyst_sentiment", "source",
+    ]
+    assert frame.index.tz is not None
+    assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "analyst_count"] == 10
+    assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "analyst_sentiment"] == pytest.approx(0.65)
+
+
+def test_get_insider_sentiment_normalizes_monthly_series() -> None:
+    captured: dict[str, object] = {}
+
+    def transport(url: str, params: dict[str, str], timeout: float) -> dict[str, object]:
+        captured.update(url=url, params=params, timeout=timeout)
+        return {
+            "symbol": "NVDA",
+            "data": [
+                {"year": 2026, "month": 7, "change": -1200, "mspr": -18.5},
+                {"year": 2026, "month": 8, "change": 500, "mspr": 12.25},
+            ],
+        }
+
+    frame = FinnhubClient("secret", transport=transport).get_insider_sentiment(
+        "nvda", start="2026-07-01", end="2026-08-31"
+    )
+
+    assert frame.attrs == {"symbol": "NVDA", "frequency": "monthly"}
+    assert list(frame.columns) == ["mspr", "change", "source"]
+    assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "mspr"] == 12.25
+    assert captured["params"] == {
+        "symbol": "NVDA", "from": "2026-07-01", "to": "2026-08-31"
+    }
 
 
 def test_get_latest_rejects_incomplete_response() -> None:
