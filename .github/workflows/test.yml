@@ -6,31 +6,50 @@ on:
   pull_request:
 
 jobs:
-  test:
-    # Use the latest Ubuntu runner.
+  unit-tests:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repository contents.
       - name: Check out repo
         uses: actions/checkout@v4
 
-      # Install and configure Python 3.14 for the job.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
-      # Install uv so the project uses the same package manager as local development.
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      # Install the project and dev dependencies from the pyproject.toml file.
       - name: Install dependencies
-        run: |
-          ~/.local/bin/uv sync --dev
+        run: ~/.local/bin/uv sync --dev
 
-      # Run the project test suite with pytest.
-      - name: Run tests
-        run: ~/.local/bin/uv run pytest tests -q
+      # Unit tests deliberately exclude tests that call external services.
+      - name: Run unit tests
+        run: ~/.local/bin/uv run pytest tests -q -m "not integration"
+
+  finnhub-integration:
+    # Repository secrets are not supplied to workflows triggered by forked PRs.
+    # Run the real API check on pushes where the repository secret is available.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: ~/.local/bin/uv sync --dev
+
+      - name: Run Finnhub integration tests
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: ~/.local/bin/uv run pytest tests -q -m integration
