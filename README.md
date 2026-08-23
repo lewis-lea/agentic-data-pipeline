@@ -104,6 +104,37 @@ The diagnostics include Augmented Dickey-Fuller and KPSS stationarity tests,
 autocorrelation (ACF), and partial autocorrelation (PACF). These are returned as
 summary statistics rather than appended as per-row columns.
 
+## Benchmark-relative metrics
+
+`HMWO.L` is the default benchmark symbol for benchmark-relative analysis.
+Benchmark calculations accept a benchmark DataFrame explicitly so there are no
+hidden network calls and callers can substitute another benchmark when needed.
+
+```python
+from agentic_data_pipeline import (
+    DEFAULT_BENCHMARK,
+    add_benchmark_metrics,
+    benchmark_statistics,
+)
+from agentic_data_pipeline.ingestion import YFinanceClient
+
+client = YFinanceClient()
+asset = client.get_history("NVDA", period="5y")
+benchmark = client.get_history(DEFAULT_BENCHMARK, period="5y")
+
+summary = benchmark_statistics(asset, benchmark)
+rolling = add_benchmark_metrics(asset, benchmark, window=90)
+```
+
+`benchmark_statistics()` returns beta, alpha, R-squared, correlation, annualised
+excess return, tracking error, information ratio, upside/downside capture, and
+asset/benchmark/relative maximum drawdowns. `add_benchmark_metrics()` appends
+aligned benchmark return, excess return, rolling correlation, beta, alpha and
+R-squared features.
+
+See [`METRICS.md`](METRICS.md) for definitions, interpretation guidance and the
+full list of metrics.
+
 ## Schema validation
 
 The package exposes `create_market_data()` and `validate_market_data()` for
