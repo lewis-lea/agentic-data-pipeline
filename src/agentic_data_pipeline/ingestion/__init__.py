@@ -5,6 +5,12 @@ from agentic_data_pipeline.ingestion.finnhub import (
     FinnhubClient,
     FinnhubConfigurationError,
 )
+from agentic_data_pipeline.ingestion.yfinance import YFinanceClient, YFinanceError
 
-__all__ = ["FinnhubApiError", "FinnhubClient", "FinnhubConfigurationError"]
-
+__all__ = [
+    "FinnhubApiError",
+    "FinnhubClient",
+    "FinnhubConfigurationError",
+    "YFinanceClient",
+    "YFinanceError",
+]
