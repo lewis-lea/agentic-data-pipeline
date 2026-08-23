@@ -49,6 +49,15 @@ jobs:
       - name: Install dependencies
         run: ~/.local/bin/uv sync --dev
 
+      - name: Require Finnhub API key
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          if [ -z "$FINNHUB_API_KEY" ]; then
+            echo "FINNHUB_API_KEY repository secret is not configured" >&2
+            exit 1
+          fi
+
       - name: Run Finnhub integration tests
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
