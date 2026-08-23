@@ -1,79 +1,66 @@
 # Agentic Data Pipeline
 
-Reusable ingestion and cleaning components for time-series data.
+Reusable ingestion and cleaning components for time-series market data.
 
-## Finnhub real-time quotes
+All providers return a canonical pandas `DataFrame` with a UTC `DatetimeIndex`
+and the columns:
 
-Set your API token in the environment, then request a standardized quote:
+```text
+open, high, low, close, volume, source
+```
+
+Dataset-level metadata such as `symbol` and `interval` is stored in
+`DataFrame.attrs`. The `source` remains a column so observations from multiple
+providers can be concatenated while retaining provenance.
+
+## Finnhub latest quotes
+
+Set your API token in the environment:
 
 ```bash
 export FINNHUB_API_KEY="your-token"
 ```
 
+Then request the latest observation:
+
 ```python
 from agentic_data_pipeline.ingestion import FinnhubClient
 
-client = FinnhubClient()
-quote = client.get_quote("AAPL")
-print(quote.to_dict())
+latest = FinnhubClient().get_latest("AAPL")
+print(latest)
 ```
 
-Each result is a provider-independent `MarketQuote` with a timezone-aware UTC
-timestamp. The connector deliberately exposes only Finnhub's free real-time US
-stock quote endpoint; premium historical candle APIs are not used.
-
-`MarketQuote` integrates directly with pandas:
-
-```python
-quote_series = quote.to_series()
-quote_frame = quote.to_frame()
-```
+`get_quote()` remains available as a compatibility alias. Finnhub's current
+price is normalized to the canonical `close` field. Quote responses do not
+contain volume, so `volume` is `NaN`. Quote-only fields such as previous close
+and percentage change are stored in `DataFrame.attrs`.
 
 ## Historical data with yfinance
-
-Historical OHLCV data can be fetched into a provider-independent `TimeSeries`:
 
 ```python
 from agentic_data_pipeline.ingestion import YFinanceClient
 
-client = YFinanceClient()
-history = client.get_history("AAPL", period="5y", interval="1d")
+history = YFinanceClient().get_history("AAPL", period="5y", interval="1d")
+print(history.tail())
 ```
 
-Use explicit dates when preferred:
+Because both providers return the same pandas representation, they can be
+combined directly:
 
 ```python
-history = client.get_history(
-    "AAPL",
-    start="2020-01-01",
-    end="2026-01-01",
-    interval="1d",
-)
+import pandas as pd
+
+history = YFinanceClient().get_history("AAPL", period="1y")
+latest = FinnhubClient().get_latest("AAPL")
+combined = pd.concat([history, latest]).sort_index()
 ```
 
-A `TimeSeries` is an ordered sequence of `TimeSeriesPoint` objects and converts
-directly to a pandas `DataFrame`:
+## Schema validation
 
-```python
-frame = history.to_dataframe()
-```
-
-The reverse conversion is also supported for OHLCV DataFrames:
-
-```python
-from agentic_data_pipeline import TimeSeries
-
-history = TimeSeries.from_dataframe(
-    frame,
-    symbol="AAPL",
-    source="custom",
-)
-```
-
-All canonical timestamps are timezone-aware UTC values. yfinance is an
-open-source client for Yahoo Finance's publicly available interfaces; users
-should ensure their use of downloaded data complies with the applicable Yahoo
-terms.
+The package exposes `create_market_data()` and `validate_market_data()` for
+normalizing other providers into the same contract. Market data must have UTC
+timestamps, OHLC values, non-negative volume where volume is present, a source,
+and a symbol in `DataFrame.attrs`.
 
 ## Development
 
