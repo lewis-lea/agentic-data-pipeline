@@ -73,7 +73,13 @@ class FinnhubClient:
         return self.get_latest(symbol)
 
     def get_recommendation_trends(self, symbol: str) -> pd.DataFrame:
-        """Fetch monthly analyst recommendation counts and a normalized score."""
+        """Fetch monthly analyst recommendation counts and a normalized score.
+
+        The returned frame is indexed by the recommendation period and contains
+        ``strong_buy``, ``buy``, ``hold``, ``sell``, ``strong_sell``,
+        ``analyst_count``, ``analyst_sentiment`` and ``source``. The sentiment
+        score ranges from -1 (all strong sell) to +1 (all strong buy).
+        """
 
         normalized_symbol = self._normalize_symbol(symbol)
         payload = self._transport(
@@ -110,35 +116,6 @@ class FinnhubClient:
         if not isinstance(payload, Mapping):
             raise FinnhubApiError("insider sentiment response must be a JSON object")
         return self._normalize_insider_sentiment(payload, normalized_symbol)
-
-    def get_social_sentiment(
-        self,
-        symbol: str,
-        *,
-        start: str | None = None,
-        end: str | None = None,
-    ) -> pd.DataFrame:
-        """Fetch Finnhub social-media sentiment for a stock symbol.
-
-        Finnhub currently documents this dataset as Premium. Calling this
-        method with an unentitled API key will surface Finnhub's API error as a
-        :class:`FinnhubApiError`.
-        """
-
-        normalized_symbol = self._normalize_symbol(symbol)
-        params = {"symbol": normalized_symbol}
-        if start is not None:
-            params["from"] = start
-        if end is not None:
-            params["to"] = end
-        payload = self._transport(
-            f"{self.BASE_URL}/stock/social-sentiment",
-            params,
-            self.timeout,
-        )
-        if not isinstance(payload, Mapping):
-            raise FinnhubApiError("social sentiment response must be a JSON object")
-        return self._normalize_social_sentiment(payload, normalized_symbol)
 
     @staticmethod
     def _normalize_symbol(symbol: str) -> str:
@@ -261,39 +238,6 @@ class FinnhubClient:
 
         frame = pd.DataFrame(rows, index=pd.DatetimeIndex(index, name="timestamp")).sort_index()
         frame.attrs = {"symbol": symbol, "frequency": "monthly"}
-        return frame
-
-    @staticmethod
-    def _normalize_social_sentiment(payload: JsonObject, symbol: str) -> pd.DataFrame:
-        if "error" in payload:
-            raise FinnhubApiError(str(payload["error"]))
-        data = payload.get("data")
-        if not isinstance(data, list):
-            raise FinnhubApiError("social sentiment response is missing data")
-
-        rows: list[dict[str, Any]] = []
-        index: list[pd.Timestamp] = []
-        try:
-            for item in data:
-                if not isinstance(item, Mapping):
-                    raise ValueError("data item must be an object")
-                rows.append(
-                    {
-                        "mention": int(item["mention"]),
-                        "positive_mention": int(item["positiveMention"]),
-                        "negative_mention": int(item["negativeMention"]),
-                        "positive_score": float(item["positiveScore"]),
-                        "negative_score": float(item["negativeScore"]),
-                        "sentiment_score": float(item["score"]),
-                        "source": "finnhub",
-                    }
-                )
-                index.append(pd.Timestamp(item["atTime"], tz="UTC"))
-        except (KeyError, TypeError, ValueError) as exc:
-            raise FinnhubApiError(f"invalid social sentiment value: {exc}") from exc
-
-        frame = pd.DataFrame(rows, index=pd.DatetimeIndex(index, name="timestamp")).sort_index()
-        frame.attrs = {"symbol": symbol, "dataset": "social_sentiment"}
         return frame
 
     def _request_json(
