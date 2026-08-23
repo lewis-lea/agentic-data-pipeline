@@ -19,269 +19,116 @@ The asset symbol is stored in `DataFrame.attrs["symbol"]`. Daily benchmark stati
 
 ### Simple return
 
-Column: `return`
-
-The percentage change in closing price from one observation to the next.
-
-Use: measuring period-to-period performance and as a building block for benchmark-relative analysis.
+Column: `return`. Percentage change in closing price from one observation to the next. Use: period-to-period performance and benchmark-relative analysis.
 
 ### Log return
 
-Column: `log_return`
-
-The natural logarithm of the ratio between consecutive closes.
-
-Use: statistical time-series modelling because log returns are additive over time and are generally more suitable than raw prices for stationarity-based methods.
+Column: `log_return`. Natural logarithm of the ratio between consecutive closes. Use: statistical time-series modelling and additive multi-period returns.
 
 ### Cumulative return
 
-Column: `cumulative_return`
+Column: `cumulative_return`. Compounded return from the start of the series. Use: total growth over the selected period.
 
-The compounded return from the start of the supplied series.
+### Moving averages
 
-Use: visualising total growth over the selected period.
-
-### Simple moving averages
-
-Columns: `sma_20`, `sma_50` by default.
-
-Use: smoothing short-term price noise, identifying trend direction, and comparing short- and long-horizon trends.
-
-### Exponential moving average
-
-Column: `ema_20` by default.
-
-Use: trend estimation with greater weighting on more recent observations.
+Columns: `sma_20`, `sma_50`, `ema_20` by default. Use: smoothing price noise and identifying trend direction.
 
 ## Volatility and momentum metrics
 
 ### Rolling volatility
 
-Column: `volatility_20` by default.
-
-The rolling standard deviation of log returns.
-
-Use: measuring changing return dispersion and identifying volatility regimes.
+Column: `volatility_20` by default. Rolling standard deviation of log returns. Use: changing return dispersion and volatility regimes.
 
 ### Momentum
 
-Column: `momentum_20` by default.
-
-The percentage price change over the selected lookback window.
-
-Use: measuring medium-term trend strength.
+Column: `momentum_20` by default. Percentage price change over the lookback window. Use: medium-term trend strength.
 
 ### RSI
 
-Column: `rsi_14` by default.
-
-Relative Strength Index from the `ta` package.
-
-Use: measuring recent upward versus downward price momentum. Traditionally interpreted on a 0-100 scale.
+Column: `rsi_14`. Relative Strength Index from `ta`. Use: recent upward versus downward price momentum.
 
 ### MACD
 
-Columns: `macd`, `macd_signal`, `macd_diff`.
-
-Moving Average Convergence Divergence and its signal line.
-
-Use: identifying changes in trend momentum and moving-average convergence/divergence.
+Columns: `macd`, `macd_signal`, `macd_diff`. Use: changes in trend momentum.
 
 ### Average True Range
 
-Column: `atr_14`.
-
-Use: measuring typical trading range and price volatility using high, low and prior-close information.
+Column: `atr_14`. Use: typical trading range and price volatility.
 
 ### Bollinger Bands
 
-Columns: `bollinger_mid`, `bollinger_high`, `bollinger_low`.
-
-Use: comparing price with a moving mean and volatility-scaled upper/lower bands.
+Columns: `bollinger_mid`, `bollinger_high`, `bollinger_low`. Use: comparing price with a moving mean and volatility-scaled bands.
 
 ### On-Balance Volume
 
-Column: `obv`.
-
-Use: relating price direction to trading volume. The metric is returned as `NaN` when volume is incomplete, such as a Finnhub latest quote.
+Column: `obv`. Use: relating price direction to trading volume. Returned as `NaN` when volume is incomplete.
 
 ## Risk metrics
 
 ### Drawdown
 
-Column: `drawdown`.
+Column: `drawdown`. Percentage fall from the running peak close. Use: quantifying losses from prior highs.
 
-The percentage fall from the running peak close.
+### Maximum and relative maximum drawdown
 
-Use: quantifying loss from prior highs and identifying stress periods.
-
-### Maximum drawdown
-
-Returned by `benchmark_statistics()` as `max_drawdown`.
-
-Use: summarising the worst peak-to-trough loss over the comparison period.
-
-### Relative maximum drawdown
-
-Returned as `relative_max_drawdown`.
-
-Asset maximum drawdown minus benchmark maximum drawdown.
-
-Use: identifying whether an asset suffered materially worse or better drawdowns than the benchmark.
+`benchmark_statistics()` returns `max_drawdown`, `benchmark_max_drawdown`, and `relative_max_drawdown`. Use: comparing peak-to-trough losses with the benchmark.
 
 ## Statistical diagnostics
 
-Function: `time_series_diagnostics()`.
+Function: `time_series_diagnostics()`. Diagnostics are performed on log returns.
 
-Diagnostics are performed on log returns rather than raw prices.
-
-### Augmented Dickey-Fuller test
-
-Output: `adf`.
-
-Use: testing the null hypothesis that the series contains a unit root and is non-stationary.
-
-### KPSS test
-
-Output: `kpss`.
-
-Use: complementary stationarity test whose null hypothesis is stationarity.
-
-### Autocorrelation function
-
-Output: `acf`.
-
-Use: measuring linear dependence between returns and their lagged values.
-
-### Partial autocorrelation function
-
-Output: `pacf`.
-
-Use: measuring lag dependence after controlling for shorter lags, often useful when choosing autoregressive model order.
+- **ADF**: tests the null hypothesis that the series contains a unit root.
+- **KPSS**: complementary test whose null hypothesis is stationarity.
+- **ACF**: linear dependence between returns and lagged values.
+- **PACF**: lag dependence after controlling for shorter lags.
 
 ## Benchmark-relative statistics
 
-Function: `benchmark_statistics(asset, benchmark)`.
+Function: `benchmark_statistics(asset, benchmark)`. Asset and benchmark are aligned on common timestamps and converted to close-to-close returns.
 
-The asset and benchmark are aligned on common timestamps and converted to close-to-close simple returns. `HMWO.L` is the repository's default benchmark symbol.
-
-### Beta
-
-Output: `beta`.
-
-Estimated by OLS regression:
-
-```text
-asset_return = alpha + beta * benchmark_return + error
-```
-
-Use: measuring sensitivity to benchmark movements. Beta above 1 indicates greater benchmark sensitivity; below 1 indicates lower sensitivity.
-
-### Alpha
-
-Outputs: `alpha_per_period`, `alpha_annualized`.
-
-The regression intercept from the same OLS model.
-
-Use: estimating the component of average asset return not explained by benchmark exposure.
-
-### R-squared
-
-Output: `r_squared`.
-
-Use: measuring the fraction of asset-return variation explained by the benchmark regression.
-
-### Correlation
-
-Output: `correlation`.
-
-Use: measuring how closely asset and benchmark returns move together, independent of scale.
-
-### Annualised excess return
-
-Output: `excess_return_annualized`.
-
-Mean asset return minus mean benchmark return, annualised using the configured periods per year.
-
-Use: measuring straightforward active performance versus the benchmark.
-
-### Tracking error
-
-Output: `tracking_error_annualized`.
-
-Annualised standard deviation of asset-minus-benchmark returns.
-
-Use: measuring the volatility of active returns and how consistently the asset differs from the benchmark.
-
-### Information ratio
-
-Output: `information_ratio`.
-
-Annualised mean active return divided by annualised tracking error.
-
-Use: measuring excess return earned per unit of benchmark-relative risk.
-
-### Upside capture
-
-Output: `upside_capture`.
-
-Mean asset return divided by mean benchmark return during periods when the benchmark return is positive.
-
-Use: measuring how strongly the asset participates in rising markets. A value above 1 means the asset gained more than the benchmark on average during benchmark-up periods.
-
-### Downside capture
-
-Output: `downside_capture`.
-
-Mean asset return divided by mean benchmark return during periods when the benchmark return is negative.
-
-Use: measuring participation in falling markets. Values below 1 are generally preferable because the asset fell less than the benchmark on average.
+- **Beta**: OLS sensitivity of asset returns to benchmark returns.
+- **Alpha**: regression intercept, returned per-period and annualised.
+- **R-squared**: fraction of asset-return variation explained by the benchmark.
+- **Correlation**: return co-movement independent of scale.
+- **Annualised excess return**: mean asset minus benchmark return, annualised.
+- **Tracking error**: annualised standard deviation of active returns.
+- **Information ratio**: excess return per unit of tracking error.
+- **Upside capture**: relative performance during benchmark-up periods.
+- **Downside capture**: relative performance during benchmark-down periods.
 
 ## Rolling benchmark features
 
 Function: `add_benchmark_metrics(asset, benchmark, window=90)`.
 
-These features are useful for detecting changing regimes rather than relying on one full-period statistic.
+Columns include `benchmark_return`, `excess_return`, `rolling_correlation_<window>`, `rolling_beta_<window>`, `rolling_alpha_<window>`, and `rolling_r_squared_<window>`. Use: detecting changes in market sensitivity, diversification and benchmark-adjusted performance through time.
 
-### Benchmark return
+## Qualitative Finnhub signals
 
-Column: `benchmark_return`.
+These are provider observations rather than price-derived statistics. They are returned as pandas DataFrames by `FinnhubClient` and can be aligned with market data for feature engineering.
 
-The benchmark close-to-close return aligned with the asset observation.
+### Analyst recommendation trends
 
-### Excess return
+Function: `FinnhubClient.get_recommendation_trends(symbol)`.
 
-Column: `excess_return`.
+Finnhub supplies monthly counts in five recommendation categories: strong buy, buy, hold, sell and strong sell. The connector also derives:
 
-Asset return minus benchmark return for each aligned period.
+- `analyst_count`: total recommendations in the observation.
+- `analyst_sentiment`: normalized consensus score from -1 to +1, calculated as `(2*strong_buy + buy - sell - 2*strong_sell) / (2*analyst_count)`.
 
-### Rolling correlation
+Use: measuring professional analyst consensus and changes in consensus over time. A value near +1 indicates strongly bullish consensus, zero is approximately neutral, and -1 indicates strongly bearish consensus.
 
-Column: `rolling_correlation_<window>`.
+### Insider sentiment
 
-Use: identifying changes in diversification and co-movement with the benchmark.
+Function: `FinnhubClient.get_insider_sentiment(symbol, start=..., end=...)`.
 
-### Rolling beta
+Columns:
 
-Column: `rolling_beta_<window>`.
+- `mspr`: Finnhub's monthly insider sentiment score.
+- `change`: aggregate insider share change reported by the endpoint.
 
-Use: identifying changes in market sensitivity over time.
+Use: capturing a qualitatively different signal from analyst opinion: the behaviour of corporate insiders. Changes in MSPR can be investigated alongside price, momentum and analyst-consensus changes.
 
-### Rolling alpha
-
-Column: `rolling_alpha_<window>`.
-
-Computed from rolling mean returns and rolling beta.
-
-Use: identifying periods where benchmark-adjusted performance changes materially.
-
-### Rolling R-squared
-
-Column: `rolling_r_squared_<window>`.
-
-For a one-factor benchmark relationship this is the square of rolling correlation.
-
-Use: tracking how much of the asset's return behaviour is explained by the benchmark through time.
+Both qualitative datasets use a UTC monthly `DatetimeIndex`, store the ticker in `DataFrame.attrs["symbol"]`, and retain `source="finnhub"` as a column. They should not be interpreted as daily observations; when joining them to daily price data, the alignment/forward-fill policy should be explicit to avoid look-ahead bias.
 
 ## Example
 
@@ -293,18 +140,22 @@ from agentic_data_pipeline import (
     benchmark_statistics,
     time_series_diagnostics,
 )
-from agentic_data_pipeline.ingestion import YFinanceClient
+from agentic_data_pipeline.ingestion import FinnhubClient, YFinanceClient
 
-client = YFinanceClient()
-asset = client.get_history("NVDA", period="5y")
-benchmark = client.get_history(DEFAULT_BENCHMARK, period="5y")
+prices = YFinanceClient()
+asset = prices.get_history("NVDA", period="5y")
+benchmark = prices.get_history(DEFAULT_BENCHMARK, period="5y")
 
 features = add_stock_metrics(asset)
 rolling = add_benchmark_metrics(asset, benchmark, window=90)
 summary = benchmark_statistics(asset, benchmark)
 diagnostics = time_series_diagnostics(asset)
+
+finnhub = FinnhubClient()
+recommendations = finnhub.get_recommendation_trends("NVDA")
+insider = finnhub.get_insider_sentiment("NVDA")
 ```
 
 ## Interpretation caveats
 
-These metrics describe historical behaviour; they do not imply future returns. Benchmark choice matters, and `HMWO.L` should be treated as a sensible default global-equity baseline rather than the correct benchmark for every security. Metrics based on daily returns also assume sufficiently overlapping trading dates and comparable pricing conventions between the asset and benchmark.
+These metrics and signals describe historical observations; they do not imply future returns. Benchmark choice matters, and `HMWO.L` is a default global-equity baseline rather than the correct benchmark for every security. Qualitative observations may be revised, sparse, delayed or subject to provider-plan availability. Feature pipelines must preserve the date on which information became available to avoid look-ahead bias.
