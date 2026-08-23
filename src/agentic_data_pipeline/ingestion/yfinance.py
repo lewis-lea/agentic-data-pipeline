@@ -9,7 +9,7 @@ from typing import Any
 import pandas as pd
 import yfinance as yf
 
-from agentic_data_pipeline.types import TimeSeries
+from agentic_data_pipeline.types import create_market_data
 
 HistoryLoader = Callable[..., pd.DataFrame]
 
@@ -33,13 +33,8 @@ class YFinanceClient:
         start: str | date | datetime | None = None,
         end: str | date | datetime | None = None,
         auto_adjust: bool = False,
-    ) -> TimeSeries:
-        """Fetch a stock history and return it as a canonical TimeSeries.
-
-        Use ``period`` for a relative range, or supply ``start``/``end`` for an
-        explicit date range. When either date bound is supplied, ``period`` is
-        ignored.
-        """
+    ) -> pd.DataFrame:
+        """Fetch stock history as a canonical market-data DataFrame."""
 
         normalized_symbol = symbol.strip().upper()
         if not normalized_symbol:
@@ -60,7 +55,9 @@ class YFinanceClient:
         try:
             frame = self._history_loader(normalized_symbol, **kwargs)
         except Exception as exc:
-            raise YFinanceError(f"Could not retrieve history for {normalized_symbol}: {exc}") from exc
+            raise YFinanceError(
+                f"Could not retrieve history for {normalized_symbol}: {exc}"
+            ) from exc
 
         if not isinstance(frame, pd.DataFrame):
             raise YFinanceError("yfinance history response must be a pandas DataFrame")
@@ -68,10 +65,11 @@ class YFinanceClient:
             raise YFinanceError(f"No historical data returned for {normalized_symbol}")
 
         try:
-            return TimeSeries.from_dataframe(
+            return create_market_data(
                 frame,
                 symbol=normalized_symbol,
                 source="yfinance",
+                interval=interval,
             )
         except (TypeError, ValueError) as exc:
             raise YFinanceError(f"Invalid history for {normalized_symbol}: {exc}") from exc
