@@ -2,12 +2,13 @@
 
 from datetime import datetime, timezone
 
+import pandas as pd
 import pytest
 
 from agentic_data_pipeline.ingestion.finnhub import FinnhubApiError, FinnhubClient
 
 
-def test_get_quote_normalizes_response() -> None:
+def test_get_latest_normalizes_response() -> None:
     captured: dict[str, object] = {}
 
     def transport(url: str, params: dict[str, str], timeout: float) -> dict[str, object]:
@@ -17,13 +18,19 @@ def test_get_quote_normalizes_response() -> None:
             "o": 128.0, "pc": 127.75, "t": 1_700_000_000,
         }
 
-    quote = FinnhubClient("secret", timeout=3, transport=transport).get_quote(" nvda ")
+    frame = FinnhubClient("secret", timeout=3, transport=transport).get_latest(" nvda ")
 
-    assert quote.symbol == "NVDA"
-    assert quote.current_price == 130.25
-    assert quote.change == 2.5
-    assert quote.timestamp == datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
-    assert quote.source == "finnhub"
+    assert isinstance(frame, pd.DataFrame)
+    assert list(frame.columns) == ["open", "high", "low", "close", "volume", "source"]
+    assert frame.attrs["symbol"] == "NVDA"
+    assert frame.attrs["previous_close"] == 127.75
+    assert frame.attrs["change"] == 2.5
+    assert frame.iloc[0]["close"] == 130.25
+    assert frame.iloc[0]["source"] == "finnhub"
+    assert pd.isna(frame.iloc[0]["volume"])
+    assert frame.index[0] == pd.Timestamp(
+        datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
+    )
     assert captured == {
         "url": "https://finnhub.io/api/v1/quote",
         "params": {"symbol": "NVDA"},
@@ -31,35 +38,31 @@ def test_get_quote_normalizes_response() -> None:
     }
 
 
-def test_get_quote_allows_omitted_optional_change_fields() -> None:
-    client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: {
-        "c": 10, "h": 11, "l": 9, "o": 9.5, "pc": 9.75, "t": 1_700_000_000,
-    })
+def test_get_quote_is_compatibility_alias() -> None:
+    payload = {"c": 10, "h": 11, "l": 9, "o": 9.5, "pc": 9.75, "t": 1_700_000_000}
+    client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: payload)
 
-    quote = client.get_quote("NVDA")
-
-    assert quote.change is None
-    assert quote.percent_change is None
+    assert client.get_quote("NVDA").equals(client.get_latest("NVDA"))
 
 
-def test_get_quote_rejects_incomplete_response() -> None:
+def test_get_latest_rejects_incomplete_response() -> None:
     client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: {"c": 10})
 
     with pytest.raises(FinnhubApiError, match="missing required fields"):
-        client.get_quote("NVDA")
+        client.get_latest("NVDA")
 
 
-def test_get_quote_rejects_provider_error() -> None:
+def test_get_latest_rejects_provider_error() -> None:
     client = FinnhubClient(
         "secret", transport=lambda _url, _params, _timeout: {"error": "bad symbol"}
     )
 
     with pytest.raises(FinnhubApiError, match="bad symbol"):
-        client.get_quote("NVDA")
+        client.get_latest("NVDA")
 
 
-def test_get_quote_rejects_empty_symbol() -> None:
+def test_get_latest_rejects_empty_symbol() -> None:
     client = FinnhubClient("secret", transport=lambda _url, _params, _timeout: {})
 
     with pytest.raises(ValueError, match="symbol must not be empty"):
-        client.get_quote("  ")
+        client.get_latest("  ")
