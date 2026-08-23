@@ -1,6 +1,6 @@
 # Agentic Data Pipeline
 
-Reusable ingestion and cleaning components for time-series market data.
+Reusable ingestion, cleaning, and analysis components for time-series market data.
 
 All providers return a canonical pandas `DataFrame` with a UTC `DatetimeIndex`
 and the columns:
@@ -73,6 +73,36 @@ history = YFinanceClient().get_history("AAPL", period="1y")
 latest = FinnhubClient().get_latest("AAPL")
 combined = pd.concat([history, latest]).sort_index()
 ```
+
+## Stock time-series metrics
+
+`add_stock_metrics()` appends commonly used features while keeping the result as
+an ordinary pandas `DataFrame`. Pandas is used for returns and rolling
+statistics, while the established `ta` package provides technical indicators.
+
+```python
+from agentic_data_pipeline import add_stock_metrics
+
+features = add_stock_metrics(history)
+```
+
+The default feature set includes simple and log returns, cumulative return,
+20/50-day simple moving averages, a 20-day EMA, rolling volatility, momentum,
+RSI, MACD and signal/difference series, ATR, Bollinger Bands, drawdown, and
+on-balance volume when complete volume data is available.
+
+Series-level statistical diagnostics are available separately through
+`time_series_diagnostics()`, which uses `statsmodels` on log returns:
+
+```python
+from agentic_data_pipeline import time_series_diagnostics
+
+diagnostics = time_series_diagnostics(history, nlags=20)
+```
+
+The diagnostics include Augmented Dickey-Fuller and KPSS stationarity tests,
+autocorrelation (ACF), and partial autocorrelation (PACF). These are returned as
+summary statistics rather than appended as per-row columns.
 
 ## Schema validation
 
