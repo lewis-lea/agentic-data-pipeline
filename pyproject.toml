@@ -9,12 +9,15 @@ description = "Reusable time-series ingestion and cleaning pipeline"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
+dependencies = [
+    "pandas>=2.2",
+    "yfinance>=0.2",
+]
 
 [project.optional-dependencies]
 docs = [
     "ipykernel>=6.29",
     "matplotlib>=3.9",
-    "pandas>=2.2",
     "python-dotenv>=1.0",
 ]
 
