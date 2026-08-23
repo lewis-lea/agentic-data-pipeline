@@ -22,14 +22,18 @@ def test_get_history_normalizes_dataframe() -> None:
             index=pd.DatetimeIndex(["2026-01-02", "2026-01-05"], name="Date"),
         )
 
-    series = YFinanceClient(history_loader=history_loader).get_history(
+    frame = YFinanceClient(history_loader=history_loader).get_history(
         " aapl ", period="6mo", interval="1d"
     )
 
-    assert series.symbol == "AAPL"
-    assert len(series) == 2
-    assert series[0].source == "yfinance"
-    assert series[1].close == 102.0
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.attrs["symbol"] == "AAPL"
+    assert frame.attrs["interval"] == "1d"
+    assert list(frame.columns) == ["open", "high", "low", "close", "volume", "source"]
+    assert len(frame) == 2
+    assert frame.iloc[0]["source"] == "yfinance"
+    assert frame.iloc[1]["close"] == 102.0
+    assert str(frame.index.tz) == "UTC"
     assert captured == {
         "symbol": "AAPL",
         "interval": "1d",
@@ -45,13 +49,7 @@ def test_get_history_prefers_explicit_date_range() -> None:
     def history_loader(symbol: str, **kwargs: object) -> pd.DataFrame:
         captured.update(symbol=symbol, **kwargs)
         return pd.DataFrame(
-            {
-                "Open": [100.0],
-                "High": [102.0],
-                "Low": [99.0],
-                "Close": [101.0],
-                "Volume": [1000],
-            },
+            {"Open": [100.0], "High": [102.0], "Low": [99.0], "Close": [101.0], "Volume": [1000]},
             index=pd.DatetimeIndex(["2026-01-02"], name="Date"),
         )
 
