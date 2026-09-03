@@ -3,6 +3,14 @@
 __pycache__/
 *.py[cod]
 .vscode/
+.venv/
+
+# Generated only inside agentic CI jobs.
+test-artifacts/
+triage/
+REMEDIATION.md
+remediation-status.txt
+remediation.patch
 
 data/*
 !data/README.md
