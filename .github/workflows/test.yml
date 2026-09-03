@@ -28,9 +28,24 @@ jobs:
       - name: Install dependencies
         run: ~/.local/bin/uv sync --dev
 
+      - name: Prepare test-results directory
+        run: mkdir -p test-results
+
       # Unit tests deliberately exclude tests that call external services.
       - name: Run unit tests
-        run: ~/.local/bin/uv run pytest tests -q -m "not integration"
+        run: |
+          set -o pipefail
+          ~/.local/bin/uv run pytest tests -q -m "not integration" \
+            --junitxml=test-results/unit-tests.xml \
+            2>&1 | tee test-results/unit-tests.log
+
+      - name: Upload unit-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: test-results/
+          if-no-files-found: warn
 
   finnhub-integration:
     # Repository secrets are not supplied to workflows triggered by forked PRs.
@@ -53,6 +68,9 @@ jobs:
       - name: Install dependencies
         run: ~/.local/bin/uv sync --dev
 
+      - name: Prepare test-results directory
+        run: mkdir -p test-results
+
       - name: Require Finnhub API key
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
@@ -65,7 +83,19 @@ jobs:
       - name: Run Finnhub integration tests
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-        run: ~/.local/bin/uv run pytest tests -q -m integration
+        run: |
+          set -o pipefail
+          ~/.local/bin/uv run pytest tests -q -m integration \
+            --junitxml=test-results/finnhub-integration.xml \
+            2>&1 | tee test-results/finnhub-integration.log
+
+      - name: Upload Finnhub integration results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finnhub-integration-results
+          path: test-results/
+          if-no-files-found: warn
 
   report-failure:
     name: Report CI failure
@@ -79,9 +109,12 @@ jobs:
         (needs.unit-tests.result == 'failure' || needs.finnhub-integration.result == 'failure')
       }}
     runs-on: ubuntu-latest
+    outputs:
+      issue-number: ${{ steps.report_issue.outputs.issue_number }}
 
     steps:
       - name: Create or update CI bug issue
+        id: report_issue
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
@@ -111,6 +144,8 @@ jobs:
           - **Triggered by:** @${ACTOR}
           - **Failed run:** ${RUN_URL}
 
+          Test results and logs are attached to the workflow run as GitHub Actions artifacts.
+
           This issue was created automatically by GitHub Actions.
           EOF
           )
@@ -125,14 +160,162 @@ jobs:
             | head -n 1)
 
           if [ -n "${EXISTING_NUMBER}" ]; then
-            gh issue comment "${EXISTING_NUMBER}" \
+            ISSUE_NUMBER="${EXISTING_NUMBER}"
+            gh issue comment "${ISSUE_NUMBER}" \
               --repo "${REPOSITORY}" \
               --body "${BODY}"
-            echo "Updated existing CI failure issue #${EXISTING_NUMBER}."
+            echo "Updated existing CI failure issue #${ISSUE_NUMBER}."
           else
-            gh issue create \
+            ISSUE_URL=$(gh issue create \
               --repo "${REPOSITORY}" \
               --title "${TITLE}" \
               --label bug \
-              --body "${BODY}"
+              --body "${BODY}")
+            ISSUE_NUMBER="${ISSUE_URL##*/}"
+            echo "Created CI failure issue #${ISSUE_NUMBER}."
           fi
+
+          echo "issue_number=${ISSUE_NUMBER}" >> "${GITHUB_OUTPUT}"
+
+  agentic-triage:
+    name: Agentic CI triage
+    needs:
+      - unit-tests
+      - finnhub-integration
+      - report-failure
+    if: >-
+      ${{
+        always() &&
+        github.event_name == 'push' &&
+        needs.report-failure.result == 'success' &&
+        (needs.unit-tests.result == 'failure' || needs.finnhub-integration.result == 'failure')
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out failing commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-results"
+          path: test-artifacts
+          merge-multiple: true
+
+      - name: Require OpenAI API key
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY repository secret is not configured; agentic triage cannot run." >&2
+            exit 1
+          fi
+
+      - name: Run Codex root-cause analysis
+        id: codex_triage
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ":read-only"
+          prompt: |
+            You are performing read-only root-cause analysis of a failed CI run for
+            ${{ github.repository }} at commit ${{ github.sha }}.
+
+            The checked-out repository is the exact failing commit. Machine-readable
+            pytest JUnit XML and captured pytest console logs are under:
+
+              test-artifacts/
+
+            CI results:
+            - Unit tests: ${{ needs.unit-tests.result }}
+            - Finnhub integration tests: ${{ needs.finnhub-integration.result }}
+            - Workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Bug issue: #${{ needs.report-failure.outputs.issue-number }}
+
+            Investigate the test artifacts and repository source to determine the most
+            likely root cause. You may inspect source files, tests, configuration, and
+            git history using non-destructive commands. Do not modify files, create
+            commits, push changes, or attempt remediation.
+
+            Your final response must be a standalone Markdown report with exactly these
+            top-level sections:
+
+            # CI Failure Triage
+
+            ## Root cause
+            State the most likely root cause clearly. If the available evidence is not
+            sufficient for a reliable diagnosis, say that explicitly and give the best
+            supported hypothesis rather than presenting speculation as fact.
+
+            ## Evidence
+            Cite the failing tests/error messages and relevant repository files and line
+            numbers where possible. Explain which observations support the diagnosis.
+
+            ## Reasoning
+            Explain how the evidence leads from the observed CI failure to the proposed
+            root cause. Mention plausible alternatives that were ruled out when useful.
+
+            ## Proposed fix
+            Give a concrete implementation plan, but do not make any changes yourself.
+
+            ## Verification
+            Describe the tests or checks that should demonstrate the fix is correct and
+            prevent regression.
+
+      - name: Write triage report
+        env:
+          CODEX_TRIAGE: ${{ steps.codex_triage.outputs.final-message }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CODEX_TRIAGE" ]; then
+            echo "Codex returned an empty triage report." >&2
+            exit 1
+          fi
+          printf '%s\n' "$CODEX_TRIAGE" > TRIAGE.md
+
+      - name: Upload triage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-triage-report
+          path: TRIAGE.md
+          if-no-files-found: error
+
+  publish-triage:
+    name: Publish CI triage
+    needs:
+      - report-failure
+      - agentic-triage
+    if: >-
+      ${{
+        always() &&
+        needs.report-failure.result == 'success' &&
+        needs.agentic-triage.result == 'success'
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Download triage report
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-triage-report
+          path: triage
+
+      - name: Append triage report to CI issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ needs.report-failure.outputs.issue-number }}
+        run: |
+          set -euo pipefail
+          gh issue comment "${ISSUE_NUMBER}" \
+            --repo "${REPOSITORY}" \
+            --body-file triage/TRIAGE.md
