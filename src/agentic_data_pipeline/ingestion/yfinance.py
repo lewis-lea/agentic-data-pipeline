@@ -24,7 +24,7 @@ class YFinanceClient:
     def __init__(self, *, history_loader: HistoryLoader | None = None) -> None:
         self._history_loader = history_loader or self._load_history
 
-    def get_history(
+    def get_history_broken_for_triage_demo(
         self,
         symbol: str,
         *,
