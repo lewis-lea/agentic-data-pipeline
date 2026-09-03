@@ -1,6 +1,6 @@
 # Agentic Data Pipeline
 
-Reusable ingestion, cleaning, and analysis components for time-series market data.
+Reusable ingestion, cleaning, analysis, and persistence components for time-series market data.
 
 All providers return a canonical pandas `DataFrame` with a UTC `DatetimeIndex`
 and the columns:
@@ -73,6 +73,45 @@ history = YFinanceClient().get_history("AAPL", period="1y")
 latest = FinnhubClient().get_latest("AAPL")
 combined = pd.concat([history, latest]).sort_index()
 ```
+
+## Persistence and incremental ingestion
+
+`ParquetStorage` persists datasets under a configurable data root. Market data
+uses an interval-first layout such as `raw/yfinance/1d/NVDA.parquet`; qualitative
+Finnhub datasets use paths such as `raw/finnhub/recommendations/NVDA.parquet`.
+Each Parquet file has a JSON sidecar containing schema and DataFrame metadata.
+
+```python
+from agentic_data_pipeline import ParquetStorage
+
+storage = ParquetStorage()
+storage.save_market_data(history, source="yfinance", interval="1d")
+restored = storage.load_market_data(
+    source="yfinance", interval="1d", symbol="AAPL"
+)
+```
+
+For repeatable updates, `update_yfinance_market_data()` performs first-run and
+incremental ingestion in one operation:
+
+```python
+from agentic_data_pipeline import update_yfinance_market_data
+
+history = update_yfinance_market_data(
+    "NVDA",
+    interval="1d",
+    initial_period="5y",
+)
+```
+
+On the first run, the requested initial period is fetched and persisted. On
+later runs, ingestion begins at the most recent persisted timestamp and fetches
+only the latest range. The boundary observation is intentionally re-fetched so
+provider revisions to the latest bar are retained; duplicate timestamps are
+resolved in favour of the newly downloaded observation.
+
+Set `AGENTIC_DATA_ROOT` to move persisted data outside the default `./data`
+directory.
 
 ## Stock time-series metrics
 
