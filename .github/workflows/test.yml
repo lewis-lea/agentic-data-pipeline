@@ -102,14 +102,14 @@ jobs:
     needs:
       - unit-tests
       - finnhub-integration
-    # Remediation branches get exactly one automated attempt. Their CI results
-    # are visible normally, but failures must never open another issue or start
+    # Automated fix branches get exactly one attempt. Their CI results are
+    # visible normally, but failures must never open another issue or start
     # another triage/remediation cycle.
     if: >-
       ${{
         always() &&
         github.event_name == 'push' &&
-        !startsWith(github.ref_name, 'remediation/issue-') &&
+        !startsWith(github.ref_name, 'fix/issue-') &&
         (needs.unit-tests.result == 'failure' || needs.finnhub-integration.result == 'failure')
       }}
     runs-on: ubuntu-latest
@@ -346,19 +346,19 @@ jobs:
       contents: read
 
     steps:
-      - name: Check out failing commit on local remediation branch
+      - name: Check out failing commit on local fix branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Create local issue remediation branch
+      - name: Create local issue fix branch
         env:
           ISSUE_NUMBER: ${{ needs.report-failure.outputs.issue-number }}
         run: |
           set -euo pipefail
-          git checkout -b "remediation/issue-${ISSUE_NUMBER}"
+          git checkout -b "fix/issue-${ISSUE_NUMBER}"
 
       - name: Download test artifacts
         uses: actions/download-artifact@v4
@@ -406,7 +406,7 @@ jobs:
 
             You are currently on the dedicated local branch:
 
-              remediation/issue-${{ needs.report-failure.outputs.issue-number }}
+              fix/issue-${{ needs.report-failure.outputs.issue-number }}
 
             It was created from the exact failing commit ${{ github.sha }}. The root-cause
             analysis is available at:
@@ -470,7 +470,7 @@ jobs:
           if-no-files-found: error
 
   publish-remediation:
-    name: Publish remediation branch
+    name: Publish fix branch
     needs:
       - report-failure
       - agentic-remediation
@@ -508,16 +508,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          REMEDIATION_BRANCH="remediation/issue-${ISSUE_NUMBER}"
+          FIX_BRANCH="fix/issue-${ISSUE_NUMBER}"
           STATUS=$(cat remediation-result/remediation-status.txt)
 
-          # A remote issue branch is the durable marker that the one allowed
+          # A remote issue fix branch is the durable marker that the one allowed
           # remediation attempt has already been made. This also makes workflow
           # re-runs idempotent: they cannot produce a second automated attempt.
-          if git ls-remote --exit-code --heads origin "${REMEDIATION_BRANCH}" >/dev/null 2>&1; then
+          if git ls-remote --exit-code --heads origin "${FIX_BRANCH}" >/dev/null 2>&1; then
             gh issue comment "${ISSUE_NUMBER}" \
               --repo "${REPOSITORY}" \
-              --body "Automated remediation was not run again because branch \`${REMEDIATION_BRANCH}\` already exists. This issue is limited to one automated remediation attempt."
+              --body "Automated remediation was not run again because branch \`${FIX_BRANCH}\` already exists. This issue is limited to one automated remediation attempt."
             exit 0
           fi
 
@@ -527,24 +527,24 @@ jobs:
               --body-file remediation-result/REMEDIATION.md
             gh issue comment "${ISSUE_NUMBER}" \
               --repo "${REPOSITORY}" \
-              --body "Codex did not identify a safe source change, so no remediation branch was pushed. The automated remediation attempt is complete and will not be retried automatically for this workflow run."
+              --body "Codex did not identify a safe source change, so no fix branch was pushed. The automated remediation attempt is complete and will not be retried automatically for this workflow run."
             exit 0
           fi
 
-          git checkout -b "${REMEDIATION_BRANCH}"
+          git checkout -b "${FIX_BRANCH}"
           git apply --binary --index remediation-result/remediation.patch
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Attempt automated remediation for issue #${ISSUE_NUMBER}"
-          git push origin "HEAD:${REMEDIATION_BRANCH}"
+          git push origin "HEAD:${FIX_BRANCH}"
 
           PR_URL=$(gh pr create \
             --repo "${REPOSITORY}" \
             --base "${BASE_BRANCH}" \
-            --head "${REMEDIATION_BRANCH}" \
+            --head "${FIX_BRANCH}" \
             --title "Automated remediation for #${ISSUE_NUMBER}" \
-            --body "Single automated remediation attempt for #${ISSUE_NUMBER}.\n\nThe branch was produced from the failing commit by Codex using the CI triage report and test artifacts. CI will run on this branch, but failures on \`remediation/issue-*\` branches are explicitly prevented from creating new CI issues or triggering another remediation cycle.\n\nReview the generated changes and CI results before merging.")
+            --body "Single automated remediation attempt for #${ISSUE_NUMBER}.\n\nThe branch was produced from the failing commit by Codex using the CI triage report and test artifacts. CI will run on this branch, but failures on \`fix/issue-*\` branches are explicitly prevented from creating new CI issues or triggering another remediation cycle.\n\nReview the generated changes and CI results before merging.")
 
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPOSITORY}" \
@@ -552,4 +552,4 @@ jobs:
 
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPOSITORY}" \
-            --body "Automated remediation branch: \`${REMEDIATION_BRANCH}\`\n\nPull request: ${PR_URL}\n\nThis is the only automated remediation attempt for this issue. If its CI fails, no new CI issue or remediation cycle will be created from that branch."
+            --body "Automated fix branch: \`${FIX_BRANCH}\`\n\nPull request: ${PR_URL}\n\nThis is the only automated remediation attempt for this issue. If its CI fails, no new CI issue or remediation cycle will be created from that branch."
