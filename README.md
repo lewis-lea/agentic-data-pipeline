@@ -183,6 +183,25 @@ and a symbol in `DataFrame.attrs`.
 
 ## Development
 
+### Optional agentic CI
+
+AI failure triage, automated remediation, and their publishing jobs are disabled
+by default. They run only when the GitHub Actions configuration variable
+`ENABLE_AGENTIC_CI` is set to `true`.
+
+To re-enable them, open the repository's **Settings > Secrets and variables >
+Actions > Variables** and set `ENABLE_AGENTIC_CI` to `true`. The agent jobs also
+require the `OPENAI_API_KEY` repository secret. Set the variable to `false` to
+disable them again; an unset variable also leaves them disabled.
+
+Unit tests, Finnhub integration tests, test-result artifacts, and automatic CI
+failure issues continue to run under their existing conditions. The single-attempt
+remediation guard for `fix/issue-*` branches remains in place when agentic CI is
+enabled. The flag applies to new workflow runs using this version of the workflow;
+it does not cancel jobs that are already running.
+
+### Local tests
+
 ```bash
 uv sync
 uv run pytest

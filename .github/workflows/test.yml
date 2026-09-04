@@ -187,9 +187,11 @@ jobs:
       - unit-tests
       - finnhub-integration
       - report-failure
+    # Agentic CI is off unless the ENABLE_AGENTIC_CI Actions variable is 'true'.
     if: >-
       ${{
         always() &&
+        vars.ENABLE_AGENTIC_CI == 'true' &&
         github.event_name == 'push' &&
         needs.report-failure.result == 'success' &&
         (needs.unit-tests.result == 'failure' || needs.finnhub-integration.result == 'failure')
@@ -298,6 +300,7 @@ jobs:
     if: >-
       ${{
         always() &&
+        vars.ENABLE_AGENTIC_CI == 'true' &&
         needs.report-failure.result == 'success' &&
         needs.agentic-triage.result == 'success'
       }}
@@ -335,6 +338,7 @@ jobs:
     if: >-
       ${{
         always() &&
+        vars.ENABLE_AGENTIC_CI == 'true' &&
         github.event_name == 'push' &&
         needs.report-failure.result == 'success' &&
         needs.agentic-triage.result == 'success' &&
@@ -477,6 +481,7 @@ jobs:
     if: >-
       ${{
         always() &&
+        vars.ENABLE_AGENTIC_CI == 'true' &&
         needs.report-failure.result == 'success' &&
         needs.agentic-remediation.result == 'success'
       }}
