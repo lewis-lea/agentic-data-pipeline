@@ -240,9 +240,15 @@ is not overall suite coverage; percentages from separate jobs must not be added
 or averaged. Reports are retained under the repository's Actions artifact
 retention policy, rather than stored as a permanent coverage history.
 
-This initially reports coverage without enforcing a minimum percentage. The
-project's guideline remains above 80% for critical paths. Use `uv run pytest
---no-cov` when coverage is not needed, for example during debugging.
+For future commits, aim for at least **85% line coverage and 85% branch
+coverage**, measured separately across the package by the non-integration unit
+suite. The combined terminal percentage is not a substitute for either metric.
+Add meaningful tests for new or changed behavior, including branch outcomes.
+These are development targets while the baseline is below them; CI currently
+reports coverage without enforcing a minimum percentage.
+
+Use `uv run pytest --no-cov` when coverage is not needed, for example during
+debugging.
 
 An executable NVIDIA/Finnhub walkthrough is available in
 [`docs/finnhub_nvidia_examples.ipynb`](docs/finnhub_nvidia_examples.ipynb).
