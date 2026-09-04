@@ -56,7 +56,11 @@ When adding a new ingestion connector:
 
 ### 3. Testing & Quality
 - Run tests before committing: `pytest tests/`
-- Keep test coverage above 80% for critical paths
+- Aim for at least 85% line coverage and 85% branch coverage on future commits,
+  measured separately across the package by the non-integration unit suite.
+- Add meaningful tests for new or changed behavior, including branch outcomes.
+  These are development targets while the baseline is below them, not CI gates.
+  See README.md for coverage reports and interpretation.
 - Use meaningful test names describing what is tested
 - Mock external data sources in unit tests
 - Use fixtures for common test data patterns

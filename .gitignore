@@ -5,6 +5,12 @@ __pycache__/
 .vscode/
 .venv/
 
+# Generated test and coverage reports.
+.coverage
+.coverage.*
+coverage/
+test-results/
+
 # Generated only inside agentic CI jobs.
 test-artifacts/
 triage/
