@@ -207,6 +207,43 @@ uv sync
 uv run pytest
 ```
 
+Coverage is collected by default for all package source files, including modules
+that tests never import. Reports include line and branch coverage; the terminal
+percentage combines statements and branch outcomes.
+
+To reproduce the credential-free CI unit suite:
+
+```bash
+uv sync --dev
+uv run pytest -m "not integration"
+```
+
+Each run writes the following reports (overwriting the previous local run):
+
+| Report | Location | Purpose |
+| --- | --- | --- |
+| Cobertura XML | `coverage/coverage.xml` | Coverage-tool integrations |
+| JSON | `coverage/coverage.json` | Machine-readable metrics for dashboard processing |
+| HTML | `coverage/html/index.html` | Browse uncovered lines and branches |
+| Terminal | Test console output | Per-file coverage and missing lines |
+
+GitHub Actions also adds a coverage table to each test job's summary and uploads
+the reports as `unit-test-coverage` and `finnhub-integration-coverage` artifacts,
+including when tests fail after coverage collection. Download and extract an
+artifact, then open `html/index.html` to inspect the HTML report. Existing JUnit
+test-result artifacts remain separate: JUnit describes test outcomes, while
+Cobertura XML describes source coverage.
+
+The unit-test report is the repeatable baseline. The integration report measures
+only the Finnhub integration tests against the entire package, so its percentage
+is not overall suite coverage; percentages from separate jobs must not be added
+or averaged. Reports are retained under the repository's Actions artifact
+retention policy, rather than stored as a permanent coverage history.
+
+This initially reports coverage without enforcing a minimum percentage. The
+project's guideline remains above 80% for critical paths. Use `uv run pytest
+--no-cov` when coverage is not needed, for example during debugging.
+
 An executable NVIDIA/Finnhub walkthrough is available in
 [`docs/finnhub_nvidia_examples.ipynb`](docs/finnhub_nvidia_examples.ipynb).
 Install its optional dependencies with `uv sync --extra docs`.

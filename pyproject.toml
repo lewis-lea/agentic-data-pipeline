@@ -31,12 +31,23 @@ packages = ["src/agentic_data_pipeline"]
 [dependency-groups]
 dev = [
     "pytest>=8.0",
+    "pytest-cov>=6.0",
     "python-dotenv>=1.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "--cov --cov-report=term-missing --cov-report=xml:coverage/coverage.xml --cov-report=json:coverage/coverage.json --cov-report=html:coverage/html"
 markers = [
     "integration: tests that call external services and may require credentials",
 ]
+
+[tool.coverage.run]
+source = ["src/agentic_data_pipeline"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true

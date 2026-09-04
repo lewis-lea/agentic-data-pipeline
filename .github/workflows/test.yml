@@ -35,9 +35,19 @@ jobs:
       - name: Run unit tests
         run: |
           set -o pipefail
+          echo '## Unit-test coverage' >> "$GITHUB_STEP_SUMMARY"
           ~/.local/bin/uv run pytest tests -q -m "not integration" \
+            --cov-report="markdown-append:$GITHUB_STEP_SUMMARY" \
             --junitxml=test-results/unit-tests.xml \
             2>&1 | tee test-results/unit-tests.log
+
+      - name: Upload unit-test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          if-no-files-found: warn
 
       - name: Upload unit-test results
         if: always()
@@ -85,9 +95,19 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: |
           set -o pipefail
+          echo '## Finnhub integration coverage (integration tests only)' >> "$GITHUB_STEP_SUMMARY"
           ~/.local/bin/uv run pytest tests -q -m integration \
+            --cov-report="markdown-append:$GITHUB_STEP_SUMMARY" \
             --junitxml=test-results/finnhub-integration.xml \
             2>&1 | tee test-results/finnhub-integration.log
+
+      - name: Upload Finnhub integration coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finnhub-integration-coverage
+          path: coverage/
+          if-no-files-found: warn
 
       - name: Upload Finnhub integration results
         if: always()
