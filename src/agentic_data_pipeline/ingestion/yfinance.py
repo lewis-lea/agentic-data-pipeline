@@ -183,8 +183,8 @@ class YFinanceClient:
         else:
             history_kwargs["period"] = "max"
         frame = yf.Ticker(symbol).history(**history_kwargs)
-        if "Dividends" not in frame.columns:
-            return pd.Series(dtype=float, index=frame.index, name="Dividends")
+        if frame.empty or "Dividends" not in frame.columns:
+            raise YFinanceError("Dividend availability is unknown: no usable history returned")
         return frame["Dividends"]
 
     def get_actions(
