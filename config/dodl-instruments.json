@@ -1,0 +1,864 @@
+{
+  "checked_at": "2026-09-04",
+  "sources": [
+    "https://dodl.co.uk/investments/shares",
+    "https://dodl.co.uk/investments/themed",
+    "https://dodl.co.uk/investments/funds",
+    "https://help.dodl.co.uk/en/articles/6934005-how-has-the-investment-range-changed"
+  ],
+  "instruments": [
+    {
+      "id": "abdn-l",
+      "name": "Aberdeen Group",
+      "symbol": "ABDN.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/ABDN.L/"
+    },
+    {
+      "id": "ajb-l",
+      "name": "AJ Bell",
+      "symbol": "AJB.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/AJB.L/"
+    },
+    {
+      "id": "barc-l",
+      "name": "Barclays",
+      "symbol": "BARC.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BARC.L/"
+    },
+    {
+      "id": "brk-b",
+      "name": "Berkshire Hathaway",
+      "symbol": "BRK-B",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BRK-B/"
+    },
+    {
+      "id": "hsba-l",
+      "name": "HSBC",
+      "symbol": "HSBA.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/HSBA.L/"
+    },
+    {
+      "id": "lgen-l",
+      "name": "Legal & General",
+      "symbol": "LGEN.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/LGEN.L/"
+    },
+    {
+      "id": "lio-l",
+      "name": "Liontrust",
+      "symbol": "LIO.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/LIO.L/"
+    },
+    {
+      "id": "lloy-l",
+      "name": "Lloyds Banking Group",
+      "symbol": "LLOY.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/LLOY.L/"
+    },
+    {
+      "id": "mng-l",
+      "name": "M&G",
+      "symbol": "MNG.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/MNG.L/"
+    },
+    {
+      "id": "nwg-l",
+      "name": "NatWest",
+      "symbol": "NWG.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/NWG.L/"
+    },
+    {
+      "id": "pypl",
+      "name": "PayPal",
+      "symbol": "PYPL",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/PYPL/"
+    },
+    {
+      "id": "plus-l",
+      "name": "Plus500",
+      "symbol": "PLUS.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/PLUS.L/"
+    },
+    {
+      "id": "pru-l",
+      "name": "Prudential",
+      "symbol": "PRU.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/PRU.L/"
+    },
+    {
+      "id": "googl",
+      "name": "Alphabet",
+      "symbol": "GOOGL",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/GOOGL/"
+    },
+    {
+      "id": "amzn",
+      "name": "Amazon",
+      "symbol": "AMZN",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/AMZN/"
+    },
+    {
+      "id": "amd",
+      "name": "AMD",
+      "symbol": "AMD",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/AMD/"
+    },
+    {
+      "id": "aapl",
+      "name": "Apple",
+      "symbol": "AAPL",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/AAPL/"
+    },
+    {
+      "id": "intc",
+      "name": "Intel",
+      "symbol": "INTC",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/INTC/"
+    },
+    {
+      "id": "meta",
+      "name": "Meta",
+      "symbol": "META",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/META/"
+    },
+    {
+      "id": "msft",
+      "name": "Microsoft",
+      "symbol": "MSFT",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/MSFT/"
+    },
+    {
+      "id": "nvda",
+      "name": "NVIDIA",
+      "symbol": "NVDA",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/NVDA/"
+    },
+    {
+      "id": "rr-l",
+      "name": "Rolls-Royce",
+      "symbol": "RR.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/RR.L/"
+    },
+    {
+      "id": "tsla",
+      "name": "Tesla",
+      "symbol": "TSLA",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/TSLA/"
+    },
+    {
+      "id": "gsk-l",
+      "name": "GSK",
+      "symbol": "GSK.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/GSK.L/"
+    },
+    {
+      "id": "oxb-l",
+      "name": "Oxford Biomedica",
+      "symbol": "OXB.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/OXB.L/"
+    },
+    {
+      "id": "pfe",
+      "name": "Pfizer",
+      "symbol": "PFE",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/PFE/"
+    },
+    {
+      "id": "sn-l",
+      "name": "Smith + Nephew",
+      "symbol": "SN.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/SN.L/"
+    },
+    {
+      "id": "bt-a-l",
+      "name": "BT",
+      "symbol": "BT-A.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BT-A.L/"
+    },
+    {
+      "id": "vod-l",
+      "name": "Vodafone",
+      "symbol": "VOD.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/VOD.L/"
+    },
+    {
+      "id": "wpp-l",
+      "name": "WPP",
+      "symbol": "WPP.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/WPP.L/"
+    },
+    {
+      "id": "bp-l",
+      "name": "BP",
+      "symbol": "BP.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BP.L/"
+    },
+    {
+      "id": "ng-l",
+      "name": "National Grid",
+      "symbol": "NG.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/NG.L/"
+    },
+    {
+      "id": "shel-l",
+      "name": "Shell",
+      "symbol": "SHEL.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/SHEL.L/"
+    },
+    {
+      "id": "sse-l",
+      "name": "SSE",
+      "symbol": "SSE.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/SSE.L/"
+    },
+    {
+      "id": "uu-l",
+      "name": "United Utilities",
+      "symbol": "UU.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/UU.L/"
+    },
+    {
+      "id": "ezj-l",
+      "name": "easyJet",
+      "symbol": "EZJ.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/EZJ.L/"
+    },
+    {
+      "id": "iag-l",
+      "name": "IAG",
+      "symbol": "IAG.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/IAG.L/"
+    },
+    {
+      "id": "abf-l",
+      "name": "ABF",
+      "symbol": "ABF.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/ABF.L/"
+    },
+    {
+      "id": "bme-l",
+      "name": "B&M",
+      "symbol": "BME.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BME.L/"
+    },
+    {
+      "id": "ko",
+      "name": "Coca-Cola",
+      "symbol": "KO",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/KO/"
+    },
+    {
+      "id": "grg-l",
+      "name": "Greggs",
+      "symbol": "GRG.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/GRG.L/"
+    },
+    {
+      "id": "mks-l",
+      "name": "M&S",
+      "symbol": "MKS.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/MKS.L/"
+    },
+    {
+      "id": "nxt-l",
+      "name": "Next",
+      "symbol": "NXT.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/NXT.L/"
+    },
+    {
+      "id": "nke",
+      "name": "Nike",
+      "symbol": "NKE",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/NKE/"
+    },
+    {
+      "id": "ocdo-l",
+      "name": "Ocado",
+      "symbol": "OCDO.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/OCDO.L/"
+    },
+    {
+      "id": "sbry-l",
+      "name": "Sainsbury's",
+      "symbol": "SBRY.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/SBRY.L/"
+    },
+    {
+      "id": "tsco-l",
+      "name": "Tesco",
+      "symbol": "TSCO.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/TSCO.L/"
+    },
+    {
+      "id": "ulvr-l",
+      "name": "Unilever",
+      "symbol": "ULVR.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/ULVR.L/"
+    },
+    {
+      "id": "wtb-l",
+      "name": "Whitbread",
+      "symbol": "WTB.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/WTB.L/"
+    },
+    {
+      "id": "fres-l",
+      "name": "Fresnillo",
+      "symbol": "FRES.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/FRES.L/"
+    },
+    {
+      "id": "glen-l",
+      "name": "Glencore",
+      "symbol": "GLEN.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/GLEN.L/"
+    },
+    {
+      "id": "rio-l",
+      "name": "Rio Tinto",
+      "symbol": "RIO.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/RIO.L/"
+    },
+    {
+      "id": "btrw-l",
+      "name": "Barratt Redrow",
+      "symbol": "BTRW.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BTRW.L/"
+    },
+    {
+      "id": "blnd-l",
+      "name": "British Land",
+      "symbol": "BLND.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/BLND.L/"
+    },
+    {
+      "id": "hmso-l",
+      "name": "Hammerson",
+      "symbol": "HMSO.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/HMSO.L/"
+    },
+    {
+      "id": "psn-l",
+      "name": "Persimmon",
+      "symbol": "PSN.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/PSN.L/"
+    },
+    {
+      "id": "rmv-l",
+      "name": "Rightmove",
+      "symbol": "RMV.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/RMV.L/"
+    },
+    {
+      "id": "tw-l",
+      "name": "Taylor Wimpey",
+      "symbol": "TW.L",
+      "category": "Shares",
+      "source_url": "https://dodl.co.uk/investments/shares",
+      "yahoo_url": "https://finance.yahoo.com/quote/TW.L/"
+    },
+    {
+      "id": "theme-1",
+      "name": "Vanguard FTSE 250 ETF",
+      "theme": "The home team",
+      "symbol": "VMID.L",
+      "category": "ETFs & ETCs",
+      "share_class": "GBP distributing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/VMID.L/",
+      "mapping_note": "GBP distributing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-2",
+      "name": "SPDR S&P 500 ETF",
+      "theme": "Across the pond",
+      "symbol": "SPXL.L",
+      "category": "ETFs & ETCs",
+      "share_class": "Accumulating, GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/SPXL.L/",
+      "mapping_note": "Accumulating, GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-3",
+      "name": "Vanguard FTSE Developed Europe ex-UK index fund",
+      "theme": "On the continent",
+      "symbol": "0P0000KSP8.L",
+      "category": "Funds",
+      "share_class": "GBP accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0000KSP8.L/",
+      "mapping_note": "GBP accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-4",
+      "name": "Fidelity index Japan fund",
+      "theme": "Going east",
+      "symbol": "0P00011RBX.L",
+      "category": "Funds",
+      "share_class": "P accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00011RBX.L/",
+      "mapping_note": "P accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-5",
+      "name": "Vanguard Pacific ex-Japan index fund",
+      "theme": "Be more pacific",
+      "symbol": "IE00B523L313.IR",
+      "category": "Funds",
+      "share_class": "GBP accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/IE00B523L313.IR/",
+      "mapping_note": "GBP accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-6",
+      "name": "iShares Core MSCI Emerging Markets ETF",
+      "theme": "The global climbers",
+      "symbol": "EMIM.L",
+      "category": "ETFs & ETCs",
+      "share_class": "IMI accumulation, GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/EMIM.L/",
+      "mapping_note": "IMI accumulation, GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-7",
+      "name": "HSBC FTSE All-World index fund",
+      "theme": "On top of the world",
+      "symbol": "0P00013P6I.L",
+      "category": "Funds",
+      "share_class": "C accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00013P6I.L/",
+      "mapping_note": "C accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-8",
+      "name": "iShares MSCI World Islamic ETF",
+      "theme": "Global Shariah",
+      "symbol": "ISWD.L",
+      "category": "ETFs & ETCs",
+      "share_class": "Distributing, GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/ISWD.L/",
+      "mapping_note": "Distributing, GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-9",
+      "name": "HSBC MSCI China ETF",
+      "theme": "Chinese titans",
+      "symbol": "HMCH.L",
+      "category": "ETFs & ETCs",
+      "share_class": "GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/HMCH.L/",
+      "mapping_note": "GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-10",
+      "name": "Franklin FTSE India ETF",
+      "theme": "Bollywood bound",
+      "symbol": "FRIN.L",
+      "category": "ETFs & ETCs",
+      "share_class": "GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/FRIN.L/",
+      "mapping_note": "GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-11",
+      "name": "Vanguard FTSE 100 index unit trust",
+      "theme": "UK top 100",
+      "symbol": "0P00018XAP.L",
+      "category": "Funds",
+      "share_class": "GBP accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00018XAP.L/",
+      "mapping_note": "GBP accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-12",
+      "name": "Legal & General Global Real Estate Dividend index fund",
+      "theme": "The property tycoon",
+      "symbol": "0P00016MMX.L",
+      "category": "Funds",
+      "share_class": "I accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00016MMX.L/",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-13",
+      "name": "Xtrackers MSCI World Financials ETF",
+      "theme": "Made of money",
+      "symbol": "XWFS.L",
+      "category": "ETFs & ETCs",
+      "share_class": "1C, GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/XWFS.L/",
+      "mapping_note": "1C, GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-14",
+      "name": "iShares S&P 500 Energy Sector ETF",
+      "theme": "The powerhouse",
+      "symbol": null,
+      "category": "ETFs & ETCs",
+      "share_class": "Dodl sources conflict between S&P 500 Energy and MSCI World Energy. Confirm the ISIN in the app.",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": null,
+      "mapping_note": "Dodl sources conflict between S&P 500 Energy and MSCI World Energy. Confirm the ISIN in the app."
+    },
+    {
+      "id": "theme-15",
+      "name": "iShares Physical Gold ETC",
+      "theme": "Going for gold",
+      "symbol": "SGLN.L",
+      "category": "ETFs & ETCs",
+      "share_class": "GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/SGLN.L/",
+      "mapping_note": "GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-16",
+      "name": "iShares Automation & Robotics ETF",
+      "theme": "Robo revolution",
+      "symbol": "RBTX.L",
+      "category": "ETFs & ETCs",
+      "share_class": "Accumulating, GBP listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/RBTX.L/",
+      "mapping_note": "Accumulating, GBP listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-17",
+      "name": "Legal & General Global Infrastructure index fund",
+      "theme": "The building blocks",
+      "symbol": "0P0001CQSC.L",
+      "category": "Funds",
+      "share_class": "C accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0001CQSC.L/",
+      "mapping_note": "C accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-18",
+      "name": "Xtrackers MSCI World Healthcare ETF",
+      "theme": "Full health",
+      "symbol": "XDWH.L",
+      "category": "ETFs & ETCs",
+      "share_class": "1C, USD listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/XDWH.L/",
+      "mapping_note": "1C, USD listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-19",
+      "name": "Legal & General Global Technology index trust",
+      "theme": "Big tech",
+      "symbol": "0P000023MW.L",
+      "category": "Funds",
+      "share_class": "I accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P000023MW.L/",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-20",
+      "name": "iShares Core UK Gilt ETF",
+      "theme": "The governments IOU",
+      "symbol": "IGLT.L",
+      "category": "Bond funds",
+      "share_class": "GBP distributing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/IGLT.L/",
+      "mapping_note": "GBP distributing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-21",
+      "name": "Vanguard Global Corporate Bond index fund",
+      "theme": "Hey big lender",
+      "symbol": "0P0001C5T6.L",
+      "category": "Bond funds",
+      "share_class": "GBP hedged accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0001C5T6.L/",
+      "mapping_note": "GBP hedged accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-22",
+      "name": "HSBC Global Government Bond ETF",
+      "theme": "The worldwide debt",
+      "symbol": "0P0001CTQ3",
+      "category": "Bond funds",
+      "share_class": "XCH GBP, as named in Dodl November 2024 update",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0001CTQ3/",
+      "mapping_note": "XCH GBP, as named in Dodl November 2024 update. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-23",
+      "name": "State Street Global High Yield Bond index fund",
+      "theme": "Lending the way",
+      "symbol": null,
+      "category": "Bond funds",
+      "share_class": "No verified Yahoo symbol for the State Street global high-yield index fund; no US high-yield ETF substituted.",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": null,
+      "mapping_note": "No verified Yahoo symbol for the State Street global high-yield index fund; no US high-yield ETF substituted."
+    },
+    {
+      "id": "theme-24",
+      "name": "Vanguard LifeStrategy 40% Equity fund",
+      "theme": "All-in-one (40% shares)",
+      "symbol": "0P0000TKZI.L",
+      "category": "Funds",
+      "share_class": "A accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0000TKZI.L/",
+      "mapping_note": "A accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-25",
+      "name": "Vanguard LifeStrategy 60% Equity fund",
+      "theme": "All-in-one (60% shares)",
+      "symbol": "0P0000TKZK.L",
+      "category": "Funds",
+      "share_class": "A accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0000TKZK.L/",
+      "mapping_note": "A accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-26",
+      "name": "Vanguard LifeStrategy 80% Equity fund",
+      "theme": "All-in-one (80% shares)",
+      "symbol": "0P0000TKZM.L",
+      "category": "Funds",
+      "share_class": "A accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0000TKZM.L/",
+      "mapping_note": "A accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-27",
+      "name": "iShares MSCI World Socially Responsible Investment ETF",
+      "theme": "Socially responsible Global",
+      "symbol": "SUSW.L",
+      "category": "ETFs & ETCs",
+      "share_class": "EUR accumulating share class, London listing",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/SUSW.L/",
+      "mapping_note": "EUR accumulating share class, London listing. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "theme-28",
+      "name": "Amundi MSCI UK Socially Responsible Investment index fund",
+      "theme": "Socially responsible UK",
+      "symbol": null,
+      "category": "Funds",
+      "share_class": "Exact Amundi share class/ISIN needs confirmation; no alternative UK ETF substituted.",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": null,
+      "mapping_note": "Exact Amundi share class/ISIN needs confirmation; no alternative UK ETF substituted."
+    },
+    {
+      "id": "theme-29",
+      "name": "Blackrock ICS Sterling Liquidity Premier MMF",
+      "theme": "Cash market fund",
+      "symbol": "IE00B43FT809.IR",
+      "category": "Funds",
+      "share_class": "Premier accumulation",
+      "source_url": "https://dodl.co.uk/investments/themed",
+      "yahoo_url": "https://finance.yahoo.com/quote/IE00B43FT809.IR/",
+      "mapping_note": "Premier accumulation. Confirm the share class against your Dodl holding."
+    },
+    {
+      "id": "aj-bell-cautious",
+      "name": "AJ Bell Cautious",
+      "symbol": "0P00019YY5.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00019YY5.L/"
+    },
+    {
+      "id": "aj-bell-moderately-cautious",
+      "name": "AJ Bell Moderately cautious",
+      "symbol": "0P00019YY9.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00019YY9.L/"
+    },
+    {
+      "id": "aj-bell-balanced",
+      "name": "AJ Bell Balanced",
+      "symbol": "0P00019YY3.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding. Also offered as Pension builder.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00019YY3.L/"
+    },
+    {
+      "id": "aj-bell-moderately-adventurous",
+      "name": "AJ Bell Moderately adventurous",
+      "symbol": "0P00019YY7.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00019YY7.L/"
+    },
+    {
+      "id": "aj-bell-adventurous",
+      "name": "AJ Bell Adventurous",
+      "symbol": "0P00019YY1.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P00019YY1.L/"
+    },
+    {
+      "id": "aj-bell-global-growth",
+      "name": "AJ Bell Global growth",
+      "symbol": "0P0001DHB8.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0001DHB8.L/"
+    },
+    {
+      "id": "aj-bell-responsible-screened-growth",
+      "name": "AJ Bell Responsible screened growth",
+      "symbol": "0P0001KYO4.L",
+      "category": "AJ Bell funds",
+      "share_class": "I accumulation",
+      "mapping_note": "I accumulation. Confirm the share class against your Dodl holding.",
+      "source_url": "https://dodl.co.uk/investments/funds",
+      "yahoo_url": "https://finance.yahoo.com/quote/0P0001KYO4.L/"
+    }
+  ]
+}

@@ -10,6 +10,8 @@ import pandas as pd
 import yfinance as yf
 
 from agentic_data_pipeline.types import create_market_data
+from agentic_data_pipeline.corporate_actions import create_corporate_actions
+import numpy as np
 
 HistoryLoader = Callable[..., pd.DataFrame]
 DistributionLoader = Callable[..., pd.Series | pd.DataFrame]
@@ -131,7 +133,7 @@ class YFinanceClient:
             raise YFinanceError("yfinance distributions must use a DatetimeIndex")
 
         numeric = pd.to_numeric(amounts, errors="coerce")
-        if numeric.isna().any():
+        if numeric.isna().any() or (~np.isfinite(numeric)).any():
             raise YFinanceError("yfinance distributions contain non-numeric values")
         if (numeric < 0).any():
             raise YFinanceError("yfinance distributions must not be negative")
@@ -164,7 +166,11 @@ class YFinanceClient:
 
     @staticmethod
     def _load_history(symbol: str, **kwargs: Any) -> pd.DataFrame:
-        return yf.Ticker(symbol).history(**kwargs)
+        ticker = yf.Ticker(symbol)
+        frame = ticker.history(**kwargs)
+        if kwargs.get("actions"):
+            frame.attrs["currency"] = ticker.history_metadata.get("currency")
+        return frame
 
     @staticmethod
     def _load_distributions(symbol: str, **kwargs: Any) -> pd.Series:
@@ -180,3 +186,32 @@ class YFinanceClient:
         if "Dividends" not in frame.columns:
             return pd.Series(dtype=float, index=frame.index, name="Dividends")
         return frame["Dividends"]
+
+    def get_actions(
+        self, symbol: str, *, period: str = "max",
+        start: str | date | datetime | None = None,
+        end: str | date | datetime | None = None,
+    ) -> pd.DataFrame:
+        """Return historical dividends, capital-gains distributions and splits.
+
+        Save with ``ParquetStorage.save_dataset(..., dataset='corporate_actions')``.
+        Cash values retain Yahoo's quote units; unknown fields are NaN rather
+        than zero. ``end`` is exclusive, following yfinance's history contract.
+        """
+        normalized_symbol = symbol.strip().upper()
+        if not normalized_symbol:
+            raise ValueError("symbol must not be empty")
+        kwargs: dict[str, Any] = {"interval": "1d", "auto_adjust": False, "actions": True}
+        if start is not None or end is not None:
+            kwargs.update(start=start, end=end)
+        else:
+            kwargs["period"] = period
+        try:
+            history = self._history_loader(normalized_symbol, **kwargs)
+            if not isinstance(history, pd.DataFrame) or history.empty:
+                raise ValueError("No history returned; event availability is unknown")
+            return create_corporate_actions(
+                history, symbol=normalized_symbol, currency=history.attrs.get("currency")
+            )
+        except Exception as exc:
+            raise YFinanceError(f"Could not retrieve actions for {normalized_symbol}: {exc}") from exc

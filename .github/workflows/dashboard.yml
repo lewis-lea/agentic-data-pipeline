@@ -1,63 +1,116 @@
-name: Build and deploy dashboard
+name: Market dashboard
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "25 5 * * 1-5"
   push:
-    branches:
-      - main
     paths:
-      - ".github/workflows/dashboard.yml"
-      - "dashboard/**"
-      - "scripts/build_dashboard.py"
-      - "src/agentic_data_pipeline/dashboard.py"
-      - "src/agentic_data_pipeline/returns.py"
-      - "src/agentic_data_pipeline/ingestion/yfinance.py"
-      - "pyproject.toml"
+      - 'dashboard/**'
+      - 'config/dodl-instruments.json'
+      - 'src/agentic_data_pipeline/**'
+      - 'tests/test_dashboard.py'
+      - 'pyproject.toml'
+      - '.github/workflows/dashboard.yml'
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - 'config/dodl-instruments.json'
+      - 'src/agentic_data_pipeline/**'
+      - 'tests/test_dashboard.py'
+      - 'pyproject.toml'
+      - '.github/workflows/dashboard.yml'
+  schedule:
+    - cron: '17 23 * * 1-5'
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+  group: dashboard-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  check:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: uv sync --dev
+      - name: Test snapshot exporter
+        run: uv run pytest tests/test_dashboard.py -q
+      - run: npm ci --prefix dashboard --ignore-scripts
+      - name: Test chart calculations and controls
+        run: npm test --prefix dashboard
+      - name: Check dashboard JavaScript
+        run: node --check dashboard/app.mjs
+
+  build:
+    needs: check
+    # PR validation is offline and credential-free. Pushes build a downloadable
+    # site; only the default branch can refresh its cache or publish Pages.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - name: Restore last-good histories
+        uses: actions/cache/restore@v4
+        with:
+          path: dashboard-cache/prices.json
+          key: dashboard-history-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: dashboard-history-v1-
+      - name: Fetch Yahoo histories and build static site
+        run: uv run python -m agentic_data_pipeline.dashboard --previous dashboard-cache/prices.json
+      - name: Save snapshot for the next refresh
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p dashboard-cache
+          cp dashboard-dist/prices.json dashboard-cache/prices.json
+      - uses: actions/cache/save@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: dashboard-cache/prices.json
+          key: dashboard-history-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload dashboard for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-dashboard
+          path: dashboard-dist/
+          include-hidden-files: true
+      - name: Upload refresh diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-refresh-status
+          path: dashboard-dist/refresh-status.json
+          if-no-files-found: warn
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && vars.ENABLE_DASHBOARD_PAGES == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard-dist
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_DASHBOARD_PAGES == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
-      - name: Install package
-        run: uv sync
-
-      - name: Build dashboard
-        run: uv run python scripts/build_dashboard.py --output site --period 5y
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload dashboard
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

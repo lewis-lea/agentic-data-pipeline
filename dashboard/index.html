@@ -1,65 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dodl investment return history</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <meta name="description" content="Compare price histories across the AJ Bell Dodl investment range.">
+  <title>Market history · Agentic Data Pipeline</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
 </head>
 <body>
+  <header class="masthead"><a href="./" class="brand"><span class="brand-icon" aria-hidden="true">↗</span> Agentic Data Pipeline</a><span class="edition">MARKET EXPLORER</span></header>
   <main>
-    <header>
-      <div>
-        <p class="eyebrow">Agentic data pipeline</p>
-        <h1>Dodl investment return history</h1>
-        <p>Compare price history and reinvested total returns across the current public Dodl range.</p>
-      </div>
-      <div id="updated" class="updated"></div>
-    </header>
-
-    <section class="controls">
-      <label>
-        Return series
-        <select id="return-mode">
-          <option value="price">Price</option>
-          <option value="total">Total return</option>
-        </select>
-      </label>
-
-      <label class="checkbox-label">
-        <input id="normalise" type="checkbox" checked>
-        Normalise
-      </label>
-
-      <label>
-        Normalise from
-        <input id="normalise-date" type="date">
-      </label>
-
-      <label class="grow">
-        Filter instruments
-        <input id="search" type="search" placeholder="Name or ticker">
-      </label>
-    </section>
-
-    <section class="layout">
-      <aside>
-        <div class="aside-heading">
-          <strong>Visible instruments</strong>
-          <div>
-            <button id="select-all" type="button">All</button>
-            <button id="select-none" type="button">None</button>
-          </div>
-        </div>
-        <div id="instrument-list" class="instrument-list"></div>
+    <div class="page-heading"><div><p class="eyebrow">THE DODL INVESTMENT RANGE</p><h1>History, side by side.</h1></div><p id="freshness" role="status">Loading price history…</p></div>
+    <div class="workspace">
+      <aside class="panel universe" aria-label="Investment selection">
+        <div class="panel-heading"><h2>Investments</h2><span id="count" class="pill">—</span></div>
+        <label class="search-label" for="search">Find an investment</label>
+        <input id="search" type="search" placeholder="Name, theme or ticker" autocomplete="off">
+        <label class="search-label" for="category">Investment type</label>
+        <select id="category"><option value="all">All investments</option><option>Shares</option><option>ETFs & ETCs</option><option>Bond funds</option><option>Funds</option><option>AJ Bell funds</option></select>
+        <div class="selection-tools"><span id="selected-count">0 selected</span><button id="clear" class="text-button" type="button">Clear selection</button></div>
+        <div id="investments" class="investment-list"><p class="muted">Loading catalogue…</p></div>
       </aside>
-      <section class="chart-panel">
-        <div id="chart"></div>
-        <p id="status" class="status"></p>
+      <section class="panel chart-panel" aria-label="Price comparison">
+        <div class="chart-heading"><div><p class="eyebrow">DAILY PRICE HISTORY</p><h2 id="chart-title">Compare investments</h2></div><label class="switch"><input id="normalise" type="checkbox" checked><span class="switch-track" aria-hidden="true"></span>Normalise</label></div>
+        <div class="controls">
+          <label>Compare<select id="return-mode"><option value="price">Prices</option><option value="total">Total return</option></select></label>
+          <label>Chart from<input id="start" type="date"></label>
+          <label>Chart to<input id="end" type="date"></label>
+          <label id="base-label">Normalise to<input id="base" type="date"></label>
+        </div>
+        <p id="method" class="method">Each investment starts at 100 on your selected reference date.</p>
+        <div id="message" class="notice" role="status" hidden></div>
+        <div class="chart-wrap"><svg id="chart" viewBox="0 0 1000 480" role="img" aria-label="Investment price history chart"></svg><div id="tooltip" class="tooltip" hidden></div><div id="empty" class="empty" hidden><span aria-hidden="true">↗</span><h3>Choose your comparison</h3><p>Select investments from the list to plot their history.</p></div></div>
+        <div id="legend" class="legend" aria-label="Selected investments"></div>
+        <div class="table-wrap"><table><caption class="sr-only">Plotted investments, reference prices and latest values</caption><thead><tr><th>Investment</th><th>Reference close</th><th>Latest plotted</th><th>Last observation</th></tr></thead><tbody id="comparison"></tbody></table></div>
+        <details class="distributions"><summary>Distribution & split history</summary><p class="method">Reported events for the visible investments and chart dates. Cash amounts are per share in Yahoo’s original quote units; dates are event/ex-dates, not payment dates. No reported events does not establish that no distributions occurred.</p><p><a href="./corporate-actions.csv" download>Download all events (CSV)</a> · <a href="./corporate-actions.json" download>JSON</a></p><div class="table-wrap"><table><thead><tr><th>Investment</th><th>Event date</th><th>Dividend</th><th>Capital gain</th><th>Split ratio</th></tr></thead><tbody id="distributions"></tbody></table></div></details>
       </section>
-    </section>
+    </div>
+    <footer><p>Yahoo Finance daily close prices via yfinance. Prices exclude cash distributions; accumulation funds retain income within their unit price. Normalised comparisons use each investment’s own currency, not a GBP investment return.</p><p>Catalogue: <a href="https://dodl.co.uk/investments/shares">Dodl shares</a> · <a href="https://dodl.co.uk/investments/themed">Themed investments</a> · <a href="https://dodl.co.uk/investments/funds">AJ Bell funds</a>. <span id="catalogue-date"></span> Includes bond funds; Dodl does not offer individual bonds. Independently built; not affiliated with Dodl.</p></footer>
   </main>
-  <script src="app.js"></script>
 </body>
 </html>

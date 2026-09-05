@@ -10,6 +10,9 @@ __pycache__/
 .coverage.*
 coverage/
 test-results/
+dashboard-dist/
+dashboard-cache/
+node_modules/
 
 # Generated only inside agentic CI jobs.
 test-artifacts/
