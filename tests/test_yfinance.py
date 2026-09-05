@@ -74,3 +74,93 @@ def test_get_history_rejects_empty_symbol() -> None:
 
     with pytest.raises(ValueError, match="symbol must not be empty"):
         client.get_history("   ")
+
+
+def test_get_distributions_normalizes_series_and_omits_zero_payments() -> None:
+    captured: dict[str, object] = {}
+
+    def distribution_loader(symbol: str, **kwargs: object) -> pd.Series:
+        captured.update(symbol=symbol, **kwargs)
+        return pd.Series(
+            [0.0, 0.25, 0.3],
+            index=pd.DatetimeIndex(
+                ["2025-12-01", "2026-01-15", "2026-04-15"],
+                tz="Europe/London",
+                name="Date",
+            ),
+            name="Dividends",
+        )
+
+    frame = YFinanceClient(distribution_loader=distribution_loader).get_distributions(
+        " vhyl.l ", start="2026-01-01", end="2026-06-01"
+    )
+
+    assert captured == {
+        "symbol": "VHYL.L",
+        "start": "2026-01-01",
+        "end": "2026-06-01",
+    }
+    assert list(frame.columns) == ["cash_amount", "source"]
+    assert frame["cash_amount"].tolist() == [0.25, 0.3]
+    assert frame["source"].tolist() == ["yfinance", "yfinance"]
+    assert str(frame.index.tz) == "UTC"
+    assert frame.index.name == "timestamp"
+    assert frame.attrs["symbol"] == "VHYL.L"
+    assert frame.attrs["dataset"] == "distributions"
+
+
+def test_get_distributions_accepts_dividends_dataframe_and_empty_result() -> None:
+    index = pd.DatetimeIndex(["2026-01-15"], tz="UTC")
+    dataframe_client = YFinanceClient(
+        distribution_loader=lambda _symbol, **_kwargs: pd.DataFrame(
+            {"Dividends": [0.2]}, index=index
+        )
+    )
+    assert dataframe_client.get_distributions("ABC").iloc[0]["cash_amount"] == 0.2
+
+    empty_client = YFinanceClient(
+        distribution_loader=lambda _symbol, **_kwargs: pd.Series(
+            dtype=float, index=pd.DatetimeIndex([], tz="UTC")
+        )
+    )
+    empty = empty_client.get_distributions("ABC")
+    assert empty.empty
+    assert list(empty.columns) == ["cash_amount", "source"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "message"),
+    [
+        (["not", "pandas"], "Series or DataFrame"),
+        (
+            pd.Series([1.0], index=pd.Index(["not-a-date"])),
+            "DatetimeIndex",
+        ),
+        (
+            pd.Series(["bad"], index=pd.DatetimeIndex(["2026-01-01"])),
+            "non-numeric",
+        ),
+        (
+            pd.Series([-1.0], index=pd.DatetimeIndex(["2026-01-01"])),
+            "must not be negative",
+        ),
+        (
+            pd.DataFrame(
+                {"Other": [1.0]}, index=pd.DatetimeIndex(["2026-01-01"])
+            ),
+            "must contain Dividends",
+        ),
+    ],
+)
+def test_get_distributions_rejects_invalid_responses(raw: object, message: str) -> None:
+    client = YFinanceClient(distribution_loader=lambda _symbol, **_kwargs: raw)  # type: ignore[arg-type]
+    with pytest.raises(YFinanceError, match=message):
+        client.get_distributions("ABC")
+
+
+def test_get_distributions_wraps_provider_errors() -> None:
+    def broken(_symbol: str, **_kwargs: object) -> pd.Series:
+        raise RuntimeError("boom")
+
+    with pytest.raises(YFinanceError, match="Could not retrieve distributions"):
+        YFinanceClient(distribution_loader=broken).get_distributions("ABC")

@@ -1,0 +1,63 @@
+name: Build and deploy dashboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "25 5 * * 1-5"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/dashboard.yml"
+      - "dashboard/**"
+      - "scripts/build_dashboard.py"
+      - "src/agentic_data_pipeline/dashboard.py"
+      - "src/agentic_data_pipeline/returns.py"
+      - "src/agentic_data_pipeline/ingestion/yfinance.py"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install package
+        run: uv sync
+
+      - name: Build dashboard
+        run: uv run python scripts/build_dashboard.py --output site --period 5y
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload dashboard
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

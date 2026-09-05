@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dodl investment return history</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Agentic data pipeline</p>
+        <h1>Dodl investment return history</h1>
+        <p>Compare price history and reinvested total returns across the current public Dodl range.</p>
+      </div>
+      <div id="updated" class="updated"></div>
+    </header>
+
+    <section class="controls">
+      <label>
+        Return series
+        <select id="return-mode">
+          <option value="price">Price</option>
+          <option value="total">Total return</option>
+        </select>
+      </label>
+
+      <label class="checkbox-label">
+        <input id="normalise" type="checkbox" checked>
+        Normalise
+      </label>
+
+      <label>
+        Normalise from
+        <input id="normalise-date" type="date">
+      </label>
+
+      <label class="grow">
+        Filter instruments
+        <input id="search" type="search" placeholder="Name or ticker">
+      </label>
+    </section>
+
+    <section class="layout">
+      <aside>
+        <div class="aside-heading">
+          <strong>Visible instruments</strong>
+          <div>
+            <button id="select-all" type="button">All</button>
+            <button id="select-none" type="button">None</button>
+          </div>
+        </div>
+        <div id="instrument-list" class="instrument-list"></div>
+      </aside>
+      <section class="chart-panel">
+        <div id="chart"></div>
+        <p id="status" class="status"></p>
+      </section>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
