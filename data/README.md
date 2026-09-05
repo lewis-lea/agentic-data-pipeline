@@ -20,6 +20,23 @@ raw/
       HMWO.L.metadata.json
 ```
 
+Cash distributions are stored independently from prices so dividends and fund
+distributions can be inspected and used explicitly in total-return calculations:
+
+```text
+raw/
+  yfinance/
+    distributions/
+      NVDA.parquet
+      NVDA.metadata.json
+      VHYL.L.parquet
+      VHYL.L.metadata.json
+```
+
+Each distribution row records `cash_amount` per share/unit plus `source`.
+An empty distribution dataset is valid for an instrument with no recorded cash
+payments.
+
 Qualitative data uses dataset-first partitioning with one file per symbol:
 
 ```text

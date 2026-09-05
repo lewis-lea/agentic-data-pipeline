@@ -1,0 +1,7 @@
+{
+  "name": "agentic-market-dashboard-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test --experimental-test-coverage *.test.mjs"},
+  "devDependencies": {"jsdom": "26.1.0"}
+}
