@@ -45,7 +45,7 @@ def build_return_history(
     cash = pd.Series(0.0, index=market.index, dtype=float)
     cash.index.name = market.index.name
 
-    if distributions is not None and not distributions.empty:
+    if distributions is not None:
         if not isinstance(distributions, pd.DataFrame):
             raise TypeError("distributions must be a pandas DataFrame")
         if not isinstance(distributions.index, pd.DatetimeIndex):
@@ -53,15 +53,16 @@ def build_return_history(
         if "cash_amount" not in distributions.columns:
             raise ValueError("distributions must contain a cash_amount column")
 
-        amounts = pd.to_numeric(distributions["cash_amount"], errors="coerce")
-        if amounts.isna().any() or (~np.isfinite(amounts)).any() or (amounts < 0).any():
-            raise ValueError("cash_amount values must be non-negative and finite")
+        if not distributions.empty:
+            amounts = pd.to_numeric(distributions["cash_amount"], errors="coerce")
+            if amounts.isna().any() or (~np.isfinite(amounts)).any() or (amounts < 0).any():
+                raise ValueError("cash_amount values must be non-negative and finite")
 
-        grouped = amounts.groupby(distributions.index).sum().sort_index()
-        for timestamp, amount in grouped.items():
-            position = market.index.searchsorted(timestamp, side="left")
-            if position < len(market.index):
-                cash.iloc[position] += float(amount)
+            grouped = amounts.groupby(distributions.index).sum().sort_index()
+            for timestamp, amount in grouped.items():
+                position = market.index.searchsorted(timestamp, side="left")
+                if position < len(market.index):
+                    cash.iloc[position] += float(amount)
 
     price_index = close / close.iloc[0] * base
     period_return = (close + cash) / close.shift(1) - 1.0
