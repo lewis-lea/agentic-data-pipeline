@@ -110,3 +110,90 @@ def update_yfinance_market_data(
         symbol=normalized_symbol,
         layer=layer,
     )
+
+
+def update_yfinance_distributions(
+    symbol: str,
+    *,
+    end: str | date | datetime | None = None,
+    storage: ParquetStorage | None = None,
+    client: YFinanceClient | None = None,
+    layer: str = "raw",
+) -> pd.DataFrame:
+    """Fetch and persist explicit yfinance cash-distribution history.
+
+    Cash distributions are stored independently from OHLCV data under
+    ``<layer>/yfinance/distributions/<symbol>.parquet``. The latest persisted
+    timestamp is re-fetched on subsequent runs so provider revisions replace
+    the previous value. Instruments with no distributions are represented by a
+    valid empty dataset and are checked again on the next update.
+    """
+
+    normalized_symbol = symbol.strip().upper()
+    if not normalized_symbol:
+        raise ValueError("symbol must not be empty")
+
+    resolved_storage = storage or ParquetStorage()
+    resolved_client = client or YFinanceClient()
+    path = resolved_storage.dataset_path(
+        source="yfinance",
+        dataset="distributions",
+        symbol=normalized_symbol,
+        layer=layer,
+    )
+
+    if not path.exists():
+        initial = resolved_client.get_distributions(normalized_symbol, end=end)
+        resolved_storage.save_dataset(
+            initial,
+            source="yfinance",
+            dataset="distributions",
+            symbol=normalized_symbol,
+            layer=layer,
+        )
+        return resolved_storage.load_dataset(
+            source="yfinance",
+            dataset="distributions",
+            symbol=normalized_symbol,
+            layer=layer,
+        )
+
+    existing = resolved_storage.load_dataset(
+        source="yfinance",
+        dataset="distributions",
+        symbol=normalized_symbol,
+        layer=layer,
+    )
+    start = existing.index.max() if not existing.empty else None
+
+    if start is not None and end is not None:
+        end_timestamp = pd.Timestamp(end)
+        if end_timestamp.tzinfo is None:
+            end_timestamp = end_timestamp.tz_localize("UTC")
+        else:
+            end_timestamp = end_timestamp.tz_convert("UTC")
+        if end_timestamp <= start:
+            return existing
+
+    latest = resolved_client.get_distributions(
+        normalized_symbol,
+        start=start,
+        end=end,
+    )
+    if latest.empty:
+        return existing
+
+    resolved_storage.save_dataset(
+        latest,
+        source="yfinance",
+        dataset="distributions",
+        symbol=normalized_symbol,
+        layer=layer,
+        update=True,
+    )
+    return resolved_storage.load_dataset(
+        source="yfinance",
+        dataset="distributions",
+        symbol=normalized_symbol,
+        layer=layer,
+    )
