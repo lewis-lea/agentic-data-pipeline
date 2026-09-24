@@ -23,3 +23,5 @@ remediation.patch
 
 data/*
 !data/README.md
+
+dashboard-local/

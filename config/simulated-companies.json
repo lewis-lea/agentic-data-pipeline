@@ -1,0 +1,45 @@
+{
+  "checked_at": "2026-09-24",
+  "description": "Six fictional companies for a synthetic demonstration. Names and symbols do not identify real issuers or index constituents.",
+  "sources": [
+    "Authored fictional company catalogue"
+  ],
+  "instruments": [
+    {
+      "id": "sim-a",
+      "name": "Simulated Company A",
+      "symbol": "SIM-A",
+      "category": "Shares"
+    },
+    {
+      "id": "sim-b",
+      "name": "Simulated Company B",
+      "symbol": "SIM-B",
+      "category": "Shares"
+    },
+    {
+      "id": "sim-c",
+      "name": "Simulated Company C",
+      "symbol": "SIM-C",
+      "category": "Shares"
+    },
+    {
+      "id": "sim-d",
+      "name": "Simulated Company D",
+      "symbol": "SIM-D",
+      "category": "Shares"
+    },
+    {
+      "id": "sim-e",
+      "name": "Simulated Company E",
+      "symbol": "SIM-E",
+      "category": "Shares"
+    },
+    {
+      "id": "sim-f",
+      "name": "Simulated Company F",
+      "symbol": "SIM-F",
+      "category": "Shares"
+    }
+  ]
+}

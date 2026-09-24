@@ -13,9 +13,10 @@ Dataset-level metadata such as `symbol` and `interval` is stored in
 `DataFrame.attrs`. The `source` remains a column so observations from multiple
 providers can be concatenated while retaining provenance.
 
-## FTSE 250 example dashboard and distribution history
+## Simulated company dashboard and distribution history
 
-The static dashboard compares selected FTSE 250 example companies, supports selectable-date
+The public dashboard uses reproducible synthetic prices and dividends for selected
+fictional companies, supports selectable-date
 normalisation and total returns, and exports dividend, capital-gain and split
 history. See [DASHBOARD.md](DASHBOARD.md) for controls, data limitations, builds
 and GitHub Pages setup.
