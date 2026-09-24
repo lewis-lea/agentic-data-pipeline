@@ -3,6 +3,8 @@ name: Python tests
 # Run this workflow on pushes and pull requests.
 on:
   push:
+    branches:
+      - '**'
   pull_request:
 
 permissions:
