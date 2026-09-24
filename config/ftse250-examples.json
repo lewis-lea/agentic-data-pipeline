@@ -1,0 +1,63 @@
+{
+  "checked_at": "2026-09-24",
+  "description": "Selected FTSE 250 company examples, not the full index or an index return series. Membership changes; review sources before relying on the selection.",
+  "sources": [
+    "https://www.londonstockexchange.com/stock/GRG/greggs-plc/company-page",
+    "https://www.londonstockexchange.com/stock/DNLM/dunelm-group-plc/company-page",
+    "https://www.londonstockexchange.com/stock/SCT/softcat-plc/company-page",
+    "https://www.londonstockexchange.com/stock/CURY/currys-plc/company-page",
+    "https://www.londonstockexchange.com/stock/MNDI/mondi-plc/company-page",
+    "https://www.londonstockexchange.com/stock/RMV/rightmove-plc/company-page",
+    "https://www.lseg.com/en/media-centre/press-releases/ftse-russell/2026/ftse-uk-index-series-review-june-2026"
+  ],
+  "instruments": [
+    {
+      "id": "grg-l",
+      "name": "Greggs",
+      "symbol": "GRG.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/GRG/greggs-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/GRG.L/"
+    },
+    {
+      "id": "dnlm-l",
+      "name": "Dunelm Group",
+      "symbol": "DNLM.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/DNLM/dunelm-group-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/DNLM.L/"
+    },
+    {
+      "id": "sct-l",
+      "name": "Softcat",
+      "symbol": "SCT.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/SCT/softcat-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/SCT.L/"
+    },
+    {
+      "id": "cury-l",
+      "name": "Currys",
+      "symbol": "CURY.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/CURY/currys-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/CURY.L/"
+    },
+    {
+      "id": "mndi-l",
+      "name": "Mondi",
+      "symbol": "MNDI.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/MNDI/mondi-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/MNDI.L/"
+    },
+    {
+      "id": "rmv-l",
+      "name": "Rightmove",
+      "symbol": "RMV.L",
+      "category": "Shares",
+      "source_url": "https://www.londonstockexchange.com/stock/RMV/rightmove-plc/company-page",
+      "yahoo_url": "https://finance.yahoo.com/quote/RMV.L/"
+    }
+  ]
+}

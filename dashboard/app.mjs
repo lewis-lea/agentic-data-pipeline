@@ -180,13 +180,13 @@ async function initialise(){
     const start=oneYear.toISOString().slice(0,10)>earliest?oneYear.toISOString().slice(0,10):earliest;
     $('start').value=start;$('end').value=latest;$('base').value=start;
     for(const id of ['start','end','base']){$(id).min=earliest;$(id).max=latest;}
-    const defaults=['AAPL','MSFT','NVDA'];
+    const defaults=['GRG.L','DNLM.L','SCT.L'];
     for(const s of defaults){const item=available.find(i=>i.symbol===s);if(item)selected.add(item.id);}
     if(!selected.size)available.slice(0,3).forEach(i=>selected.add(i.id));
     const age=(Date.now()-Date.parse(data.generated_at))/86400000;
     $('freshness').textContent=`Refresh ${data.generated_at.slice(0,10)} · ${available.length}/${data.instruments.length} histories${age>4?' · Refresh overdue':''}`;
     $('count').textContent=String(data.instruments.length);
-    $('catalogue-date').textContent=`Range checked ${data.catalogue_checked_at}.`;
+    $('catalogue-date').textContent=`Examples checked ${data.catalogue_checked_at}.`;
     render();
   }catch(error){
     $('freshness').textContent='Price history unavailable';

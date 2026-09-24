@@ -177,7 +177,7 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
 def main(argv: list[str] | None = None) -> None:
     """Build static assets and the current yfinance snapshot from the repository."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--catalogue", type=Path, default=Path("config/dodl-instruments.json"))
+    parser.add_argument("--catalogue", type=Path, default=Path("config/ftse250-examples.json"))
     parser.add_argument("--assets", type=Path, default=Path("dashboard"))
     parser.add_argument("--output", type=Path, default=Path("dashboard-dist"))
     parser.add_argument("--previous", type=Path, help="Optional last-good prices.json")

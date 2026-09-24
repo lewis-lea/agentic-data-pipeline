@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'dashboard/**'
-      - 'config/dodl-instruments.json'
+      - 'config/ftse250-examples.json'
       - 'src/agentic_data_pipeline/**'
       - 'tests/test_dashboard.py'
       - 'pyproject.toml'
@@ -12,7 +12,7 @@ on:
   pull_request:
     paths:
       - 'dashboard/**'
-      - 'config/dodl-instruments.json'
+      - 'config/ftse250-examples.json'
       - 'src/agentic_data_pipeline/**'
       - 'tests/test_dashboard.py'
       - 'pyproject.toml'
@@ -67,8 +67,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: dashboard-cache/prices.json
-          key: dashboard-history-v1-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: dashboard-history-v1-
+          key: dashboard-ftse250-examples-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: dashboard-ftse250-examples-v1-
       - name: Fetch Yahoo histories and build static site
         run: uv run python -m agentic_data_pipeline.dashboard --previous dashboard-cache/prices.json
       - name: Save snapshot for the next refresh
@@ -80,7 +80,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           path: dashboard-cache/prices.json
-          key: dashboard-history-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          key: dashboard-ftse250-examples-v1-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Upload dashboard for review
         uses: actions/upload-artifact@v4
         with:
