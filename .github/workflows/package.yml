@@ -9,39 +9,43 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-
       - name: Set up Python
         run: uv python install 3.11
-
       - name: Build distribution
         run: uv build
-
       - name: Verify wheel installs
         run: |
           uv venv .package-test
           uv pip install --python .package-test/bin/python dist/*.whl
           .package-test/bin/python -c "import agentic_data_pipeline"
-
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: agentic-data-pipeline-0.1.0
+          name: agentic-data-pipeline-${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
           path: |
             dist/*.whl
             dist/*.tar.gz
           if-no-files-found: error
           retention-days: 90
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
