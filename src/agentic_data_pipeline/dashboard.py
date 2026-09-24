@@ -1,4 +1,4 @@
-"""Publish close-price snapshots for a static dashboard using only yfinance.
+"""Build a synthetic public demo or an explicit local Yahoo-data dashboard.
 
 Run ``python -m agentic_data_pipeline.dashboard --help`` for build options.
 Funds can provide NAV/close observations without valid OHLC bars, so this
@@ -128,7 +128,7 @@ def build_snapshot(
                         result[key] = cached.get(key)
                     result["status"] = "stale"
         instruments.append(result)
-    return {"schema_version": 1, "generated_at": timestamp,
+    return {"schema_version": 1, "generated_at": timestamp, "data_source": "yfinance", "synthetic": False,
             "catalogue_checked_at": catalogue["checked_at"],
             "price_basis": PRICE_BASIS, "sources": catalogue["sources"],
             "instruments": instruments}
@@ -138,6 +138,13 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
     """Build a self-contained static directory; refuse a wholly empty release."""
     if not any(item.get("points") for item in snapshot["instruments"]):
         raise ValueError("No price history available; refusing to replace the dashboard")
+    source = snapshot.get("data_source", "yfinance")
+    if (output / "prices.json").exists():
+        previous = json.loads((output / "prices.json").read_text())
+        if previous.get("data_source", "yfinance") != source:
+            raise ValueError("Use a fresh output directory when changing data sources")
+    if source == "synthetic" and (output / "datasets/raw/yfinance").exists():
+        raise ValueError("Use a fresh output directory; real-data exports are present")
     output.mkdir(parents=True, exist_ok=True)
     for name in ("index.html", "styles.css", "app.mjs", "comparison.mjs"):
         shutil.copy2(assets / name, output / name)
@@ -159,38 +166,50 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
         frame.attrs = {"symbol": item["symbol"], "currency": item["quote_currency"],
                        "available_fields": item.get("action_fields") or [],
                        "fetched_at": item["fetched_at"], "status": item["status"],
-                       "date_semantics": "exchange-local event/ex-date",
-                       "value_basis": "Yahoo-reported per-share amounts; may be split-adjusted"}
-        storage.save_dataset(frame, source="yfinance", dataset="corporate_actions")
-        all_events.extend({"symbol": item["symbol"], "currency": item["quote_currency"],
+                       "date_semantics": "fictional ex-date" if source == "synthetic" else "exchange-local event/ex-date",
+                       "data_source": source, "synthetic": source == "synthetic",
+                       "value_basis": "Fictional simulated per-share cash" if source == "synthetic" else "Yahoo-reported per-share amounts; may be split-adjusted"}
+        storage.save_dataset(frame, source=source, dataset="corporate_actions")
+        all_events.extend({"data_source": source, "synthetic": source == "synthetic", "symbol": item["symbol"], "currency": item["quote_currency"],
                            "status": item["status"], "fetched_at": item["fetched_at"], **event}
                           for event in records)
     (output / "corporate-actions.json").write_text(json.dumps(
-        {"generated_at": snapshot["generated_at"], "events": all_events,
+        {"data_source": source, "synthetic": source == "synthetic",
+         "simulation": snapshot.get("simulation"), "generated_at": snapshot["generated_at"], "events": all_events,
          "availability": [{"symbol": i.get("symbol"), "fields": i.get("action_fields"),
                            "status": i["status"]} for i in snapshot["instruments"]]}, allow_nan=False))
-    pd.DataFrame(all_events, columns=["symbol", "currency", "status", "fetched_at", "date",
+    pd.DataFrame(all_events, columns=["data_source", "synthetic", "symbol", "currency", "status", "fetched_at", "date",
                                      "dividends", "capital_gains", "stock_splits"]).to_csv(
                                          output / "corporate-actions.csv", index=False)
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Build static assets and the current yfinance snapshot from the repository."""
+    """Build simulated histories by default; real data requires an explicit option."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalogue", type=Path, default=Path("config/ftse250-examples.json"))
     parser.add_argument("--assets", type=Path, default=Path("dashboard"))
-    parser.add_argument("--output", type=Path, default=Path("dashboard-dist"))
+    parser.add_argument("--output", type=Path, help="Default: dashboard-dist for synthetic; dashboard-local for Yahoo")
+    parser.add_argument("--data-source", choices=("synthetic", "yahoo"), default="synthetic")
+    parser.add_argument("--seed", type=int, default=2502026, help="Synthetic random seed")
     parser.add_argument("--previous", type=Path, help="Optional last-good prices.json")
     args = parser.parse_args(argv)
+    if args.output is None:
+        args.output = Path("dashboard-dist" if args.data_source == "synthetic" else "dashboard-local")
+    if args.data_source == "synthetic" and args.previous:
+        parser.error("--previous is only supported with --data-source yahoo")
     previous = None
     if args.previous and args.previous.exists():
         previous = json.loads(args.previous.read_text())
     catalogue = load_catalogue(args.catalogue)
-    snapshot = build_snapshot(catalogue, previous=previous)
+    if args.data_source == "synthetic":
+        from agentic_data_pipeline.synthetic import build_synthetic_snapshot
+        snapshot = build_synthetic_snapshot(catalogue, seed=args.seed)
+    else:
+        snapshot = build_snapshot(catalogue, previous=previous)
     # Keep a diagnostics file even if all data failed and publication is refused.
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "refresh-status.json").write_text(json.dumps(
-        {"generated_at": snapshot["generated_at"], "instruments": [
+        {"data_source": snapshot.get("data_source", "yfinance"), "generated_at": snapshot["generated_at"], "instruments": [
             {key: row.get(key) for key in ("id", "symbol", "status", "error")}
             for row in snapshot["instruments"]]}, indent=2))
     write_site(snapshot, args.assets, args.output)

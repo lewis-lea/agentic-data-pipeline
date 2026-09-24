@@ -3,19 +3,22 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {JSDOM} from 'jsdom';
 
-test('dashboard controls update chart, returns, selection and distributions', async () => {
+for (const synthetic of [false, true]) test(`dashboard controls and provenance (synthetic=${synthetic})`, async () => {
   const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
   const dom = new JSDOM(html, {url:'https://example.test/'});
   globalThis.document = dom.window.document;
   const points = [['2025-09-04',100],['2026-09-03',110],['2026-09-04',120]];
-  globalThis.fetch = async () => ({ok:true,json:async()=>({schema_version:1,generated_at:'2026-09-04T23:00:00Z',catalogue_checked_at:'2026-09-04',instruments:[
+  globalThis.fetch = async () => ({ok:true,json:async()=>({schema_version:1,synthetic,simulation:{seed:2502026},generated_at:'2026-09-04T23:00:00Z',catalogue_checked_at:'2026-09-04',instruments:[
     {id:'grg-l',name:'Greggs',symbol:'GRG.L',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:[['2025-09-04',90],['2026-09-03',105],['2026-09-04',120]],actions:[{date:'2026-09-03',dividends:1,capital_gains:0,stock_splits:0}]},
     {id:'dnlm-l',name:'Dunelm Group',symbol:'DNLM.L',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:points,actions:[]},
     {id:'missing',name:'Unavailable example share',symbol:null,category:'Shares',points:[],error:'Mapping unavailable'}
   ]})});
-  await import('./app.mjs');
+  await import(`./app.mjs?synthetic=${synthetic}`);
   await new Promise(resolve=>setImmediate(resolve));
   const $ = id=>document.getElementById(id);
+  assert.equal($('data-notice').hidden, !synthetic);
+  assert.equal($('chart').textContent.includes('SYNTHETIC DATA'), synthetic);
+  if(synthetic){assert.match($('freshness').textContent,/Synthetic demonstration/);assert.match($('distribution-method').textContent,/fictional/);}
   const change = (id,value) => {$(id).value=value;$(id).dispatchEvent(new dom.window.Event('change'));};
   assert.equal(document.querySelectorAll('.chart-line').length,2);
   assert.equal($('comparison').children.length,2);

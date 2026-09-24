@@ -1,104 +1,97 @@
-# FTSE 250 example dashboard
+# FTSE 250 synthetic example dashboard
 
-A static, yfinance-only comparison dashboard for GitHub Pages. Python acquires
-history in GitHub Actions; the browser reads the resulting JSON. No Python server,
-API key, or live Yahoo request is needed in the browser.
+The public GitHub Pages build uses **fictional, reproducible price and dividend
+histories**. No Yahoo prices are downloaded, fitted, cached or included in that
+build. Company names identify illustrative scenarios, not actual performance.
+A separate explicit Yahoo mode remains available for local research.
+
+## Synthetic dataset
+
+`src/agentic_data_pipeline/synthetic.py` generates more than 2,500 weekday
+observations per example, from 4 January 2016 to 31 December 2025, in GBP.
+
+| Example | Authored scenario |
+| --- | --- |
+| Greggs | Expansion, a sharp shared downturn, recovery and a later pullback |
+| Dunelm | Cyclical growth and larger cash distributions |
+| Softcat | Stronger long-term growth with technology-like volatility |
+| Currys | Long-term decline followed by a partial recovery |
+| Mondi | Cyclical growth followed by a sustained weaker period |
+| Rightmove | Growth followed by a flatter period |
+
+These broad trend shapes are hand-authored assumptions, **not a numerical fit
+or a claim about the companies' historical returns**. Starting levels, annual
+trend anchors, yields and volatility parameters are documented in `PROFILES`.
+The generator combines those trends with shared and stock-specific mean-reverting
+noise, an abrupt 2020-like shock/recovery and a broader 2022-like drawdown.
+
+The default seed is `2502026`; use `--seed` to produce a different realisation.
+Histories are repeatable for the same generator version, seed and dependency
+versions. Build timestamps can differ. Per-symbol random streams are stable
+when profiles are reordered. Parameters and seed travel with `prices.json` and
+the events JSON. This is demonstration data, not a forecasting model.
+
+The simplified calendar excludes weekends but includes exchange holidays.
+There are two fictional cash distributions per year on the first weekday on or
+after 15 May and 15 November, suspended in 2020. No actual payout dates, special
+dividends, capital-gain distributions or splits are reproduced. Price drops by
+the cash amount on each simulated ex-date. No splits are simulated.
 
 ## Controls and calculations
 
-Select several investments, search by name/ticker or category, and toggle a
-series with its legend button. Choose a chart range and optionally normalise each
-price series to 100 at your reference date. Non-trading dates use the last close
-on or before that date, at most seven days earlier. The table shows the actual
-reference dates. Missing, future or stale references produce a visible warning.
+Select stocks, search by name/ticker, and hide/show each series using its legend.
+Choose the chart range and optionally rebase prices to 100 on a reference date.
+Non-trading reference dates use the preceding observation, up to seven days
+earlier. Actual reference dates are shown in the comparison table.
 
-Price mode uses Yahoo `Close` with `auto_adjust=False`, excluding cash
-returns. Yahoo may already adjust historical Close for splits. Raw mode retains
-native currencies with separate axes; UK pence are converted to pounds. There is
-no FX conversion, so this is not a sterling investor's currency-adjusted return.
+Simulated total returns reinvest fictional dividends at the ex-date close:
 
-Total-return mode uses `100 * Adj Close / reference Adj Close`, relying on
-Yahoo's split and distribution adjustments as an approximation of reinvestment.
-It always uses an index; switching back restores the price-normalisation setting.
-Cash events are **not added again**, which would double-count distributions.
-Missing adjusted history is reported rather than replaced with price returns.
-Accumulation funds normally retain income within NAV and may report no cash
-payouts. Taxes, platform fees and execution costs are excluded. Provider history
-and adjustments can be incomplete or revised.
-
-## Example catalogue
-
-`config/ftse250-examples.json` contains six selected FTSE 250 company examples,
-checked on 24 September 2026. It is deliberately a sample, not the full index,
-a historical membership database, a recommendation, or an index return series.
-
-| Company | Yahoo symbol |
-| --- | --- |
-| Greggs | `GRG.L` |
-| Dunelm Group | `DNLM.L` |
-| Softcat | `SCT.L` |
-| Currys | `CURY.L` |
-| Mondi | `MNDI.L` |
-| Rightmove | `RMV.L` |
-
-The catalogue records individual London Stock Exchange company-page sources and
-the [June 2026 index review](https://www.lseg.com/en/media-centre/press-releases/ftse-russell/2026/ftse-uk-index-series-review-june-2026).
-The initial chart selects Greggs, Dunelm and Softcat where history is available.
-Index membership changes, so this maintained example selection must be reviewed
-before relying on it. No index weights or official index price series are supplied.
-The project is independent of FTSE Russell and LSEG; index names are descriptive
-references, not an endorsement or a data licence.
-
-Changing the example universe does not grant rights to redistribute Yahoo data.
-Before enabling a public deployment, obtain suitable data permissions or use
-clearly labelled synthetic data for a public demonstration. The code licence
-covers the code, not third-party market data or index content.
-
-## Distribution history
-
-`YFinanceClient.get_actions()` acquires dividends, capital-gains distributions
-and splits separately from OHLCV prices. Cash values retain Yahoo's original
-quote units (including pence). Dates represent the exchange-local event/ex-date,
-encoded as UTC midnight, not an actual payment timestamp. Missing action columns
-are unknown (`NaN`/JSON `null`), not zero. Reported zero means no reported event of
-that type on that row. The source may revise split-adjusted per-share amounts.
-
-```python
-from agentic_data_pipeline.ingestion import YFinanceClient
-from agentic_data_pipeline import ParquetStorage
-
-actions = YFinanceClient().get_actions("GRG.L", period="max")
-ParquetStorage().save_dataset(actions, source="yfinance", dataset="corporate_actions")
+```text
+wealth[t] / wealth[t-1] = (price[t] + dividend[t]) / price[t-1]
+adjusted_close[t] = wealth[t] / wealth[last] * price[last]
+index[t] = 100 * adjusted_close[t] / adjusted_close[reference]
 ```
 
-The build saves per-symbol Parquet and metadata under
-`dashboard-dist/datasets/raw/yfinance/corporate_actions/`, plus consolidated
-`corporate-actions.csv` and `corporate-actions.json`. The dashboard displays
-reported events for visible investments and dates and links both downloads.
-JSON includes field availability; consult it before interpreting an empty CSV.
+The adjusted series is compatible with the chart's existing total-return mode.
+Cash is not added twice. Taxes, fees, FX changes and reinvestment slippage are
+excluded. The banner, chart watermark, freshness text and event descriptions
+identify synthetic mode, including when the chart is exported as an SVG.
 
-The earlier `get_distributions()` and `update_yfinance_distributions()` APIs
-remain available for dividend-only `cash_amount` datasets under
-`raw/yfinance/distributions/`. `build_return_history()` remains a separate helper
-for explicitly supplied cash flows reinvested at aligned closes. Supply prices
-excluding cash adjustments and compatible currency/split units to that helper;
-it is not the dashboard's adjusted-close calculation.
+## Exports and provenance
+
+The build writes `prices.json`, `corporate-actions.csv`, `corporate-actions.json`
+and Parquet/metadata under `datasets/raw/synthetic/corporate_actions/`.
+Each snapshot and instrument, each CSV event and each Parquet metadata sidecar
+carries a synthetic flag/source. The JSON downloads carry simulation parameters
+or generator details; full assumptions remain in `synthetic.py`. Event amounts
+are fictional GBP per share, with fictional ex-dates, not actual payment dates.
+The original company names and ticker identifiers do not imply genuine prices.
+
+The builder rejects mixing real and synthetic output directories and rejects
+`--previous` in synthetic mode. Use a fresh directory when changing sources.
+GitHub Actions never restores old Yahoo caches for public builds and verifies
+synthetic provenance before uploading the site.
+
+## Catalogue
+
+`config/ftse250-examples.json` contains six selected company examples, checked
+on 24 September 2026, with source links for their identities. This is a sample,
+not the full FTSE 250, a historical membership database, a recommendation or
+an index return series. Membership can change. The project is independent of
+FTSE Russell and LSEG; the names are descriptive references, not endorsements.
 
 ## Build and test
 
 ```bash
 uv sync --dev
-uv run python -m agentic_data_pipeline.dashboard --output dashboard-dist
+uv run python -m agentic_data_pipeline.dashboard --data-source synthetic
 python -m http.server --directory dashboard-dist 8000
 ```
 
-The builder requests ten years of daily data. `--catalogue` and `--assets`
-accept alternate paths. `--previous dashboard-cache/prices.json` enables
-last-good-history reuse, explicitly labelled stale if a refresh fails. Yahoo
-rate limiting stops further requests. A wholly empty build fails without
-publishing a blank dashboard; `refresh-status.json` identifies affected symbols.
-Saved data may be old even after a successful build; the UI shows observation
-dates and warns about selected histories ending more than seven days ago.
+Synthetic is also the default when `--data-source` is omitted. Once dependencies
+are installed, building requires no network access, credentials or market data.
+`--catalogue` and `--assets` accept alternate paths; every synthetic catalogue
+symbol must have an authored profile or the build fails.
 
 ```bash
 uv run pytest -m 'not integration'
@@ -106,19 +99,38 @@ npm ci --prefix dashboard --ignore-scripts
 npm test --prefix dashboard
 ```
 
-Python produces the existing Cobertura XML, JSON and HTML coverage reports.
-JavaScript tests cover calculations and DOM controls with Node coverage. The
-85% line and 85% branch targets remain separate development targets.
+Tests cover repeatability, distinct seeds, shared downturns, dividend suspensions,
+price/total-return consistency, offline generation, exported provenance, source
+separation and dashboard controls. Existing coverage reporting remains enabled.
+
+## Local Yahoo research mode
+
+```bash
+uv run python -m agentic_data_pipeline.dashboard --data-source yahoo
+python -m http.server --directory dashboard-local 8000
+```
+
+This explicitly downloads ten years of daily Yahoo histories, and defaults to
+`dashboard-local` rather than the public build directory. Optional
+`--previous dashboard-local/prices.json` retains last-good histories, visibly
+marked stale when a refresh fails. Yahoo mode uses Close for prices and Adj Close
+for total returns, with original reported cash units retained in event exports
+under `datasets/raw/yfinance/corporate_actions/`. Pence prices convert to GBP;
+there is no FX conversion. The existing `get_actions()`, `get_distributions()`
+and incremental-ingestion APIs remain available independently.
+
+Yahoo data use and redistribution remain subject to provider terms. The code
+licence does not license third-party data. Public publishing uses synthetic mode.
 
 ## GitHub Pages
 
-`.github/workflows/dashboard.yml` validates PRs offline, builds a downloadable
-`market-dashboard` artifact on pushes, and refreshes on weekdays at 23:17 UTC
-or manual dispatch. Only `main` updates the saved snapshot or deploys Pages.
+`.github/workflows/dashboard.yml` tests PRs and builds a synthetic
+`market-dashboard` artifact on pushes or manual dispatch. Scheduled market-data
+refreshes and Yahoo-cache reuse have been removed; this fixture has a fixed
+historical period. Only `main` can deploy Pages.
 
-After merging, set repository **Settings → Pages → Source → GitHub Actions**,
-and set the Actions repository variable **ENABLE_DASHBOARD_PAGES** to `true`.
-Then run **Market dashboard** from the Actions tab. These repository settings
-must be enabled by an administrator; adding the workflow does not enable Pages.
-The deployment job reports the live URL. Leave the variable unset to build
-artifacts without publishing. This workflow needs no market-data secrets.
+After merging, set **Settings → Pages → Source → GitHub Actions** and the Actions
+repository variable **ENABLE_DASHBOARD_PAGES** to `true`. Run **Market dashboard**
+from Actions. The deployment job reports the live URL. With the variable unset,
+the workflow builds an artifact without publishing. No market-data secrets are
+required, and this change does not enable repository deployment settings.

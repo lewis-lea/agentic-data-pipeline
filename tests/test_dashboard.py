@@ -168,7 +168,7 @@ def test_cli_writes_site_and_loads_optional_previous_snapshot(monkeypatch, tmp_p
     for exists in [False, True]:
         previous = tmp_path / "previous.json"
         if exists: previous.write_text(json.dumps(snapshot))
-        dashboard.main(["--catalogue", str(path), "--output", str(tmp_path / "dist"), "--previous", str(previous)])
+        dashboard.main(["--data-source", "yahoo", "--catalogue", str(path), "--output", str(tmp_path / "dist"), "--previous", str(previous)])
         assert build.call_args.kwargs["previous"] == (json.loads(previous.read_text()) if exists else None)
     assert (tmp_path / "dist/refresh-status.json").exists()
 

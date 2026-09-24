@@ -55,17 +55,18 @@ function render() {
   const options = {normalise:total || $('normalise').checked,mode:total?'total':'price',base:$('base').value,start:$('start').value,end:$('end').value};
   $('normalise').disabled=total;
   $('base').disabled=!options.normalise;
-  $('method').textContent=total ? 'Total return = 100 × adjusted close / reference adjusted close. Uses Yahoo’s distribution and split adjustments, approximating reinvestment before personal taxes and fees. Reference dates appear below.' : options.normalise
+  $('method').textContent=data.synthetic && total ? 'Simulated total return = 100 × reinvested wealth / reference wealth. Fictional dividends are reinvested at the simulated ex-date close, before taxes and fees.' : total ? 'Total return = 100 × adjusted close / reference adjusted close. Uses Yahoo’s distribution and split adjustments, approximating reinvestment before personal taxes and fees. Reference dates appear below.' : options.normalise
     ? 'Reference = 100. Uses the last close on or before your date (up to 7 days earlier); actual dates appear below.'
     : 'Daily close in native currency. UK pence converted to pounds. Separate currency axes; no FX conversion.';
   $('chart-title').textContent = total ? 'Total return · indexed to 100' : options.normalise ? 'Price comparison · indexed to 100' : 'Price comparison · native currency';
+  if(data.synthetic)$('chart-title').textContent='Simulated · '+$('chart-title').textContent;
   const warnings=[];
   plotted=[];
   for(const item of data.instruments.filter(i=>selected.has(i.id)&&!hidden.has(i.id))) {
     const series=prepareSeries(item,options);
     if(series.error)warnings.push(`${item.theme || item.name}: ${series.error}`);
     else {series.colour=colour(item);plotted.push(series);}
-    if(item.points.length && Date.parse(data.generated_at)-Date.parse(item.points.at(-1)[0])>7*86400000)warnings.push(`${item.theme || item.name}: history ends ${item.points.at(-1)[0]}.`);
+    if(!data.synthetic && item.points.length && Date.parse(data.generated_at)-Date.parse(item.points.at(-1)[0])>7*86400000)warnings.push(`${item.theme || item.name}: history ends ${item.points.at(-1)[0]}.`);
     if(item.status==='stale')warnings.push(`${item.theme || item.name}: refresh failed; saved history is shown.`);
   }
   $('message').hidden=!warnings.length;
@@ -77,6 +78,7 @@ function draw(options) {
   const chart=$('chart');chart.replaceChildren();$('tooltip').hidden=true;
   $('empty').hidden=plotted.length>0;
   if(!plotted.length)return;
+  if(data.synthetic)chart.append(svg('text',{x:500,y:20,'text-anchor':'middle',class:'axis-label'},'SYNTHETIC DATA · NOT ACTUAL COMPANY HISTORY'));
   const units=[...new Set(plotted.map(s=>s.unit))];
   const bounds={left:80,right:units.length>2?820:910,top:40,bottom:424};
   const min=Date.parse(options.start),max=Date.parse(options.end);
@@ -135,7 +137,7 @@ function distributions(options) {
     tr.append(el('td',event.item.name),el('td',event.date),el('td',cash(event.dividends)),el('td',cash(event.capital_gains)),el('td',event.stock_splits?`${event.stock_splits}:1`:'—'));
     table.append(tr);
   }
-  if(!rows.length){const tr=el('tr'),td=el('td','No reported events in this selection.');td.colSpan=5;tr.append(td);table.append(tr);}
+  if(!rows.length){const tr=el('tr'),td=el('td',data.synthetic?'No simulated events in this selection.':'No reported events in this selection.');td.colSpan=5;tr.append(td);table.append(tr);}
 }
 
 $('chart').addEventListener('pointermove',event=>{
@@ -183,8 +185,13 @@ async function initialise(){
     const defaults=['GRG.L','DNLM.L','SCT.L'];
     for(const s of defaults){const item=available.find(i=>i.symbol===s);if(item)selected.add(item.id);}
     if(!selected.size)available.slice(0,3).forEach(i=>selected.add(i.id));
+    $('data-notice').hidden=!data.synthetic;
+    document.title=data.synthetic?'Synthetic market history · Agentic Data Pipeline':'Market history · Agentic Data Pipeline';
+    $('data-source').textContent=data.synthetic ? 'Synthetic GBP data generated from authored assumptions. No market prices were downloaded or fitted. Company names identify illustrative scenarios, not their actual performance.' : 'Yahoo Finance daily prices via yfinance. Price changes exclude cash distributions. Data use is subject to provider terms.';
+    $('distribution-method').textContent=data.synthetic ? 'Simulated dividends and events for the visible investments and chart dates. Amounts and dates are fictional, in GBP per share.' : 'Reported events in original quote units; dates are event/ex-dates, not payment dates. Missing events do not establish that none occurred.';
     const age=(Date.now()-Date.parse(data.generated_at))/86400000;
     $('freshness').textContent=`Refresh ${data.generated_at.slice(0,10)} · ${available.length}/${data.instruments.length} histories${age>4?' · Refresh overdue':''}`;
+    if(data.synthetic)$('freshness').textContent=`Synthetic demonstration · ${earliest} to ${latest} · Seed ${data.simulation.seed}`;
     $('count').textContent=String(data.instruments.length);
     $('catalogue-date').textContent=`Examples checked ${data.catalogue_checked_at}.`;
     render();
