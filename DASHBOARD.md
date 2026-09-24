@@ -1,4 +1,4 @@
-# Dodl investment dashboard
+# FTSE 250 example dashboard
 
 A static, yfinance-only comparison dashboard for GitHub Pages. Python acquires
 history in GitHub Actions; the browser reads the resulting JSON. No Python server,
@@ -26,26 +26,33 @@ Accumulation funds normally retain income within NAV and may report no cash
 payouts. Taxes, platform fees and execution costs are excluded. Provider history
 and adjustments can be incomplete or revised.
 
-## Investment catalogue
+## Example catalogue
 
-`config/dodl-instruments.json` records the public Dodl range checked on
-4 September 2026: 58 shares, 29 themed investments and seven AJ Bell funds.
-ETFs, ETCs, bond funds and money-market funds are included. The Pension Builder
-is an alias of the Balanced fund, not a duplicate investment. Sources:
+`config/ftse250-examples.json` contains six selected FTSE 250 company examples,
+checked on 24 September 2026. It is deliberately a sample, not the full index,
+a historical membership database, a recommendation, or an index return series.
 
-- [Dodl shares](https://dodl.co.uk/investments/shares)
-- [Dodl themed investments](https://dodl.co.uk/investments/themed)
-- [Dodl funds](https://dodl.co.uk/investments/funds)
-- [Changes to the range](https://help.dodl.co.uk/en/articles/6934005-how-has-the-investment-range-changed)
+| Company | Yahoo symbol |
+| --- | --- |
+| Greggs | `GRG.L` |
+| Dunelm Group | `DNLM.L` |
+| Softcat | `SCT.L` |
+| Currys | `CURY.L` |
+| Mondi | `MNDI.L` |
+| Rightmove | `RMV.L` |
 
-91 entries have explicit Yahoo mappings. Powerhouse, Lending way (State Street
-global high yield) and Socially responsible UK remain visible but unavailable
-until their exact instrument/share class can be verified. Some fund mappings
-include a share-class confirmation note. A mapped symbol does not guarantee
-Yahoo history exists. Review the catalogue when Dodl changes its range; do not
-silently resolve ambiguous names to the first search result or substitute a
-US-only bond fund for a global bond fund. Individual bond coupon histories are
-not supplied by this dashboard.
+The catalogue records individual London Stock Exchange company-page sources and
+the [June 2026 index review](https://www.lseg.com/en/media-centre/press-releases/ftse-russell/2026/ftse-uk-index-series-review-june-2026).
+The initial chart selects Greggs, Dunelm and Softcat where history is available.
+Index membership changes, so this maintained example selection must be reviewed
+before relying on it. No index weights or official index price series are supplied.
+The project is independent of FTSE Russell and LSEG; index names are descriptive
+references, not an endorsement or a data licence.
+
+Changing the example universe does not grant rights to redistribute Yahoo data.
+Before enabling a public deployment, obtain suitable data permissions or use
+clearly labelled synthetic data for a public demonstration. The code licence
+covers the code, not third-party market data or index content.
 
 ## Distribution history
 
@@ -60,7 +67,7 @@ that type on that row. The source may revise split-adjusted per-share amounts.
 from agentic_data_pipeline.ingestion import YFinanceClient
 from agentic_data_pipeline import ParquetStorage
 
-actions = YFinanceClient().get_actions("AAPL", period="max")
+actions = YFinanceClient().get_actions("GRG.L", period="max")
 ParquetStorage().save_dataset(actions, source="yfinance", dataset="corporate_actions")
 ```
 

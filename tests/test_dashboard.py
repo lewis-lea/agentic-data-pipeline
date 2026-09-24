@@ -151,11 +151,14 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
         if change == "note": del bad["instruments"][1]["mapping_note"]
         path.write_text(json.dumps(bad))
         with pytest.raises(ValueError): dashboard.load_catalogue(path)
-    actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/dodl-instruments.json")
-    assert len(actual["instruments"]) == 94
-    assert len([i for i in actual["instruments"] if i["category"] == "Shares"]) == 58
-    assert len([i for i in actual["instruments"] if i["category"] == "Bond funds"]) == 4
-    assert not {"NFLX", "COST", "DIS"} & {i["symbol"] for i in actual["instruments"]}
+    actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/ftse250-examples.json")
+    assert {i["symbol"] for i in actual["instruments"]} == {
+        "GRG.L", "DNLM.L", "SCT.L", "CURY.L", "MNDI.L", "RMV.L"
+    }
+    assert all(i["category"] == "Shares" for i in actual["instruments"])
+    assert all(i["source_url"].startswith("https://www.londonstockexchange.com/")
+               for i in actual["instruments"])
+
 
 
 def test_cli_writes_site_and_loads_optional_previous_snapshot(monkeypatch, tmp_path, catalogue, history):
