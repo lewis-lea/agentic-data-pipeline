@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - name: Run unit tests
+        run: uv run pytest tests -q -m "not integration"
+
+  package:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Set package version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          uv version "$VERSION"
+      - name: Build distribution
+        run: uv build
+      - name: Verify wheel installs
+        run: |
+          uv venv .package-test
+          uv pip install --python .package-test/bin/python dist/*.whl
+          .package-test/bin/python -c "import agentic_data_pipeline"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agentic-data-pipeline-${{ github.ref_name }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish package to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          fi
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+
+  dashboard-check:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: uv sync --dev
+      - run: uv run pytest tests/test_dashboard.py tests/test_synthetic.py -q
+      - run: npm ci --prefix dashboard --ignore-scripts
+      - run: npm test --prefix dashboard
+      - run: node --check dashboard/app.mjs
+
+  dashboard-build:
+    needs: dashboard-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - name: Generate synthetic demonstration
+        run: uv run python -m agentic_data_pipeline.dashboard --data-source synthetic
+      - name: Verify public data provenance
+        run: |
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("dashboard-dist")
+          prices = json.loads((root / "prices.json").read_text())
+          events = json.loads((root / "corporate-actions.json").read_text())
+          assert prices["synthetic"] is True and prices["data_source"] == "synthetic"
+          assert all(row["synthetic"] is True for row in prices["instruments"])
+          assert events["synthetic"] is True and events["data_source"] == "synthetic"
+          assert not (root / "datasets/raw/yfinance").exists()
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: market-dashboard-${{ github.ref_name }}
+          path: dashboard-dist/
+          include-hidden-files: true
+      - name: Upload Pages artifact
+        if: vars.ENABLE_DASHBOARD_PAGES == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard-dist
+
+  dashboard-deploy:
+    needs: dashboard-build
+    if: vars.ENABLE_DASHBOARD_PAGES == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
