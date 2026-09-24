@@ -2,23 +2,8 @@ name: Market dashboard
 
 on:
   push:
-    paths:
-      - 'dashboard/**'
-      - 'config/simulated-companies.json'
-      - 'src/agentic_data_pipeline/**'
-      - 'tests/test_dashboard*.py'
-      - 'tests/test_synthetic.py'
-      - 'pyproject.toml'
-      - '.github/workflows/dashboard.yml'
-  pull_request:
-    paths:
-      - 'dashboard/**'
-      - 'config/simulated-companies.json'
-      - 'src/agentic_data_pipeline/**'
-      - 'tests/test_dashboard*.py'
-      - 'tests/test_synthetic.py'
-      - 'pyproject.toml'
-      - '.github/workflows/dashboard.yml'
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -29,7 +14,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - name: Run unit tests
+        run: uv run pytest tests -q -m "not integration"
+
   check:
+    needs: unit-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,19 +39,14 @@ jobs:
         with:
           node-version: '24'
       - run: uv sync --dev
-      - name: Test snapshot exporter
+      - name: Test dashboard
         run: uv run pytest tests/test_dashboard.py tests/test_synthetic.py -q
       - run: npm ci --prefix dashboard --ignore-scripts
-      - name: Test chart calculations and controls
-        run: npm test --prefix dashboard
-      - name: Check dashboard JavaScript
-        run: node --check dashboard/app.mjs
+      - run: npm test --prefix dashboard
+      - run: node --check dashboard/app.mjs
 
   build:
     needs: check
-    # Every public artifact is built offline from the synthetic generator.
-    # Only the default branch can publish Pages.
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -78,28 +71,20 @@ jobs:
           assert events["synthetic"] is True and events["data_source"] == "synthetic"
           assert not (root / "datasets/raw/yfinance").exists()
           PY
-      - name: Upload dashboard for review
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: market-dashboard
+          name: market-dashboard-${{ github.ref_name }}
           path: dashboard-dist/
           include-hidden-files: true
-      - name: Upload refresh diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dashboard-refresh-status
-          path: dashboard-dist/refresh-status.json
-          if-no-files-found: warn
       - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main' && vars.ENABLE_DASHBOARD_PAGES == 'true'
+        if: vars.ENABLE_DASHBOARD_PAGES == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dashboard-dist
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_DASHBOARD_PAGES == 'true'
+    if: vars.ENABLE_DASHBOARD_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
