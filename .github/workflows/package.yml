@@ -1,9 +1,7 @@
-name: Build package
+name: Package and publish
 
 on:
   push:
-    branches:
-      - main
     tags:
       - "v*"
   workflow_dispatch:
@@ -12,17 +10,32 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - name: Run unit tests
+        run: uv run pytest tests -q -m "not integration"
+
+  build-and-publish:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - name: Set up Python
-        run: uv python install 3.11
+      - name: Set package version from tag
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          uv version "$VERSION"
+          echo "Building package version $VERSION"
       - name: Build distribution
         run: uv build
       - name: Verify wheel installs
@@ -33,7 +46,7 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: agentic-data-pipeline-${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          name: agentic-data-pipeline-${{ github.ref_name }}
           path: |
             dist/*.whl
             dist/*.tar.gz
@@ -45,13 +58,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$GITHUB_REF_NAME" \
-              --repo "$GITHUB_REPOSITORY" \
-              --title "$GITHUB_REF_NAME" \
-              --generate-notes \
-              --verify-tag
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
           fi
-
-          gh release upload "$GITHUB_REF_NAME" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
