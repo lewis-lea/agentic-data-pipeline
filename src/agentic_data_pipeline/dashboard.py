@@ -155,6 +155,10 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
     temporary.replace(output / "prices.json")
     # Separate downloadable histories retain original quote units for cash
     # amounts. Parquet plus sidecar metadata is also reusable by modelling code.
+    # Rebuilt exports must not retain identities removed from the catalogue.
+    dataset_dir = output / "datasets" / "raw" / source / "corporate_actions"
+    if dataset_dir.exists():
+        shutil.rmtree(dataset_dir)
     storage = ParquetStorage(output / "datasets")
     all_events = []
     for item in snapshot["instruments"]:
@@ -186,13 +190,17 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
 def main(argv: list[str] | None = None) -> None:
     """Build simulated histories by default; real data requires an explicit option."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--catalogue", type=Path, default=Path("config/ftse250-examples.json"))
+    parser.add_argument("--catalogue", type=Path, help="Defaults to fictional companies in synthetic mode; required for Yahoo")
     parser.add_argument("--assets", type=Path, default=Path("dashboard"))
     parser.add_argument("--output", type=Path, help="Default: dashboard-dist for synthetic; dashboard-local for Yahoo")
     parser.add_argument("--data-source", choices=("synthetic", "yahoo"), default="synthetic")
     parser.add_argument("--seed", type=int, default=2502026, help="Synthetic random seed")
     parser.add_argument("--previous", type=Path, help="Optional last-good prices.json")
     args = parser.parse_args(argv)
+    if args.catalogue is None:
+        if args.data_source == "yahoo":
+            parser.error("--data-source yahoo requires an explicit --catalogue with real symbols")
+        args.catalogue = Path("config/simulated-companies.json")
     if args.output is None:
         args.output = Path("dashboard-dist" if args.data_source == "synthetic" else "dashboard-local")
     if args.data_source == "synthetic" and args.previous:

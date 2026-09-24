@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'dashboard/**'
-      - 'config/ftse250-examples.json'
+      - 'config/simulated-companies.json'
       - 'src/agentic_data_pipeline/**'
       - 'tests/test_dashboard*.py'
       - 'tests/test_synthetic.py'
@@ -13,7 +13,7 @@ on:
   pull_request:
     paths:
       - 'dashboard/**'
-      - 'config/ftse250-examples.json'
+      - 'config/simulated-companies.json'
       - 'src/agentic_data_pipeline/**'
       - 'tests/test_dashboard*.py'
       - 'tests/test_synthetic.py'

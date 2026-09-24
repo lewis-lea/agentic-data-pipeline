@@ -151,13 +151,15 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
         if change == "note": del bad["instruments"][1]["mapping_note"]
         path.write_text(json.dumps(bad))
         with pytest.raises(ValueError): dashboard.load_catalogue(path)
-    actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/ftse250-examples.json")
+    actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/simulated-companies.json")
     assert {i["symbol"] for i in actual["instruments"]} == {
-        "GRG.L", "DNLM.L", "SCT.L", "CURY.L", "MNDI.L", "RMV.L"
+        "SIM-A", "SIM-B", "SIM-C", "SIM-D", "SIM-E", "SIM-F"
     }
     assert all(i["category"] == "Shares" for i in actual["instruments"])
-    assert all(i["source_url"].startswith("https://www.londonstockexchange.com/")
-               for i in actual["instruments"])
+    assert {i["name"] for i in actual["instruments"]} == {
+        f"Simulated Company {letter}" for letter in "ABCDEF"
+    }
+    assert all("source_url" not in i and "yahoo_url" not in i for i in actual["instruments"])
 
 
 

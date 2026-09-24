@@ -9,8 +9,8 @@ for (const synthetic of [false, true]) test(`dashboard controls and provenance (
   globalThis.document = dom.window.document;
   const points = [['2025-09-04',100],['2026-09-03',110],['2026-09-04',120]];
   globalThis.fetch = async () => ({ok:true,json:async()=>({schema_version:1,synthetic,simulation:{seed:2502026},generated_at:'2026-09-04T23:00:00Z',catalogue_checked_at:'2026-09-04',instruments:[
-    {id:'grg-l',name:'Greggs',symbol:'GRG.L',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:[['2025-09-04',90],['2026-09-03',105],['2026-09-04',120]],actions:[{date:'2026-09-03',dividends:1,capital_gains:0,stock_splits:0}]},
-    {id:'dnlm-l',name:'Dunelm Group',symbol:'DNLM.L',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:points,actions:[]},
+    {id:'sim-a',name:'Simulated Company A',symbol:'SIM-A',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:[['2025-09-04',90],['2026-09-03',105],['2026-09-04',120]],actions:[{date:'2026-09-03',dividends:1,capital_gains:0,stock_splits:0}]},
+    {id:'sim-b',name:'Simulated Company B',symbol:'SIM-B',category:'Shares',currency:'GBP',quote_currency:'GBP',status:'ok',points,adjusted_points:points,actions:[]},
     {id:'missing',name:'Unavailable example share',symbol:null,category:'Shares',points:[],error:'Mapping unavailable'}
   ]})});
   await import(`./app.mjs?synthetic=${synthetic}`);
@@ -37,7 +37,7 @@ for (const synthetic of [false, true]) test(`dashboard controls and provenance (
   assert.equal($('legend').firstElementChild.getAttribute('aria-pressed'),'false');
   $('legend').firstElementChild.click();
   assert.equal(document.querySelectorAll('.chart-line').length,2);
-  $('search').value='Dunelm';$('search').dispatchEvent(new dom.window.Event('input'));
+  $('search').value='Simulated Company B';$('search').dispatchEvent(new dom.window.Event('input'));
   assert.equal($('investments').children.length,1);
   $('investments').querySelector('input').click();
   assert.equal(document.querySelectorAll('.chart-line').length,1);

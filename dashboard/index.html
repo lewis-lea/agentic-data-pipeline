@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore simulated prices and total returns for selected FTSE 250 company examples.">
+  <meta name="description" content="Explore simulated prices and total returns for fictional companies.">
   <title>Synthetic market history · Agentic Data Pipeline</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.mjs"></script>
@@ -11,7 +11,7 @@
 <body>
   <header class="masthead"><a href="./" class="brand"><span class="brand-icon" aria-hidden="true">↗</span> Agentic Data Pipeline</a><span class="edition">MARKET EXPLORER</span></header>
   <main>
-    <div class="page-heading"><div><p class="eyebrow">FTSE 250 · SELECTED EXAMPLES</p><h1>History, side by side.</h1></div><p id="freshness" role="status">Loading price history…</p></div>
+    <div class="page-heading"><div><p class="eyebrow">SIMULATED COMPANIES</p><h1>History, side by side.</h1></div><p id="freshness" role="status">Loading price history…</p></div>
     <p id="data-notice" class="notice" role="note"><strong>Synthetic demonstration.</strong> Prices, returns and distributions are simulated, not historical observations of these companies. Not suitable for investment decisions.</p>
     <div class="workspace">
       <aside class="panel universe" aria-label="Investment selection">
@@ -39,7 +39,7 @@
         <details class="distributions"><summary>Distribution & split history</summary><p id="distribution-method" class="method">Simulated dividends and events for the visible investments and chart dates. Amounts and dates are fictional.</p><p><a href="./corporate-actions.csv" download>Download all events (CSV)</a> · <a href="./corporate-actions.json" download>JSON</a></p><div class="table-wrap"><table><thead><tr><th>Investment</th><th>Event date</th><th>Dividend</th><th>Capital gain</th><th>Split ratio</th></tr></thead><tbody id="distributions"></tbody></table></div></details>
       </section>
     </div>
-    <footer><p id="data-source">Synthetic GBP data generated from authored assumptions. No market prices were downloaded or fitted. Company names identify illustrative scenarios, not their actual performance.</p><p>Selected FTSE 250 company examples; this is not the full constituent list or the index’s performance. <span id="catalogue-date"></span> Membership can change. <a href="https://www.londonstockexchange.com/indices/ftse-250">Index information</a>. Independently built; not affiliated with or endorsed by FTSE Russell or LSEG. FTSE 250 is a third-party index name.</p></footer>
+    <footer><p id="data-source">Synthetic GBP data generated from authored assumptions. No market prices were downloaded or fitted. All company names and ticker symbols are fictional.</p><p>Six fictional companies with simulated prices and distributions. <span id="catalogue-date"></span> These examples do not represent real issuers, investment recommendations or a market index.</p></footer>
   </main>
 </body>
 </html>

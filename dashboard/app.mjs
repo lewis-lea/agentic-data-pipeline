@@ -182,18 +182,18 @@ async function initialise(){
     const start=oneYear.toISOString().slice(0,10)>earliest?oneYear.toISOString().slice(0,10):earliest;
     $('start').value=start;$('end').value=latest;$('base').value=start;
     for(const id of ['start','end','base']){$(id).min=earliest;$(id).max=latest;}
-    const defaults=['GRG.L','DNLM.L','SCT.L'];
+    const defaults=['SIM-A','SIM-B','SIM-C'];
     for(const s of defaults){const item=available.find(i=>i.symbol===s);if(item)selected.add(item.id);}
     if(!selected.size)available.slice(0,3).forEach(i=>selected.add(i.id));
     $('data-notice').hidden=!data.synthetic;
     document.title=data.synthetic?'Synthetic market history · Agentic Data Pipeline':'Market history · Agentic Data Pipeline';
-    $('data-source').textContent=data.synthetic ? 'Synthetic GBP data generated from authored assumptions. No market prices were downloaded or fitted. Company names identify illustrative scenarios, not their actual performance.' : 'Yahoo Finance daily prices via yfinance. Price changes exclude cash distributions. Data use is subject to provider terms.';
+    $('data-source').textContent=data.synthetic ? 'Synthetic GBP data generated from authored assumptions. No market prices were downloaded or fitted. All company names and ticker symbols are fictional.' : 'Yahoo Finance daily prices via yfinance. Price changes exclude cash distributions. Data use is subject to provider terms.';
     $('distribution-method').textContent=data.synthetic ? 'Simulated dividends and events for the visible investments and chart dates. Amounts and dates are fictional, in GBP per share.' : 'Reported events in original quote units; dates are event/ex-dates, not payment dates. Missing events do not establish that none occurred.';
     const age=(Date.now()-Date.parse(data.generated_at))/86400000;
     $('freshness').textContent=`Refresh ${data.generated_at.slice(0,10)} · ${available.length}/${data.instruments.length} histories${age>4?' · Refresh overdue':''}`;
     if(data.synthetic)$('freshness').textContent=`Synthetic demonstration · ${earliest} to ${latest} · Seed ${data.simulation.seed}`;
     $('count').textContent=String(data.instruments.length);
-    $('catalogue-date').textContent=`Examples checked ${data.catalogue_checked_at}.`;
+    $('catalogue-date').textContent=`${data.synthetic ? "Examples defined" : "Catalogue checked"} ${data.catalogue_checked_at}.`;
     render();
   }catch(error){
     $('freshness').textContent='Price history unavailable';

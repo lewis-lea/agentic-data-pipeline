@@ -14,7 +14,7 @@ ROOT = Path(__file__).parents[1]
 
 
 def catalogue():
-    return dashboard.load_catalogue(ROOT / 'config/ftse250-examples.json')
+    return dashboard.load_catalogue(ROOT / 'config/simulated-companies.json')
 
 
 def test_reproducible_histories_and_seed_control():
@@ -40,8 +40,8 @@ def test_cash_reinvestment_and_correlated_shock():
         assert (cash.loc['2019'] > 0).sum() == 2
         assert cash.loc['2020'].sum() == 0
         assert price.loc['2020-03-23'] / price.loc['2020-02-19'] < .85
-    assert histories['SCT.L']['Close'].iloc[-1] > histories['SCT.L']['Close'].iloc[0]
-    assert histories['CURY.L']['Close'].iloc[-1] < histories['CURY.L']['Close'].iloc[0]
+    assert histories['SIM-C']['Close'].iloc[-1] > histories['SIM-C']['Close'].iloc[0]
+    assert histories['SIM-D']['Close'].iloc[-1] < histories['SIM-D']['Close'].iloc[0]
     returns = pd.DataFrame({s: f['Adj Close'].pct_change() for s, f in histories.items()})
     assert returns.corr().to_numpy()[np.triu_indices(6, 1)].mean() > .05
 
@@ -56,17 +56,26 @@ def test_snapshot_offline_reproducibility_and_export_provenance(tmp_path, monkey
     assert first["simulation"] == second["simulation"]
     assert first['synthetic'] is True
     assert all(i['synthetic'] and i['fetched_at'] is None for i in first['instruments'])
-    dashboard.main(['--assets', str(ROOT / 'dashboard'), '--catalogue', str(ROOT / 'config/ftse250-examples.json'), '--output', str(tmp_path)])
+    monkeypatch.chdir(ROOT)
+    dashboard.main(['--output', str(tmp_path)])
     saved = json.loads((tmp_path / 'prices.json').read_text())
     assert saved['instruments'] == json.loads(json.dumps(first['instruments']))
     events = json.loads((tmp_path / 'corporate-actions.json').read_text())
     assert events['synthetic'] is True
     csv = pd.read_csv(tmp_path / 'corporate-actions.csv')
     assert csv['synthetic'].all() and (csv.data_source == 'synthetic').all()
-    stored = ParquetStorage(tmp_path / 'datasets').load_dataset(source='synthetic', dataset='corporate_actions', symbol='GRG.L')
+    stored = ParquetStorage(tmp_path / 'datasets').load_dataset(source='synthetic', dataset='corporate_actions', symbol='SIM-A')
     assert stored.attrs['synthetic'] is True
     assert not (tmp_path / 'datasets/raw/yfinance').exists()
     assert 'Synthetic demonstration' in (tmp_path / 'index.html').read_text()
+    assert {row['name'] for row in saved['instruments']} == {
+        f'Simulated Company {letter}' for letter in 'ABCDEF'
+    }
+    obsolete = tmp_path / 'datasets/raw/synthetic/corporate_actions/OBSOLETE.parquet'
+    obsolete.touch()
+    dashboard.write_site(first, ROOT / 'dashboard', tmp_path)
+    assert not obsolete.exists()
+    assert len(list(obsolete.parent.glob('*.parquet'))) == 6
 
 
 def test_unknown_profiles_and_real_cache_rejected(tmp_path):
@@ -74,6 +83,8 @@ def test_unknown_profiles_and_real_cache_rejected(tmp_path):
     unknown['instruments'][0]['symbol'] = 'UNKNOWN.L'
     with pytest.raises(ValueError, match='No synthetic profile'):
         build_synthetic_snapshot(unknown)
+    with pytest.raises(SystemExit):
+        dashboard.main(['--data-source', 'yahoo'])
     with pytest.raises(SystemExit):
         dashboard.main(['--previous', str(tmp_path / 'prices.json')])
     snapshot = build_synthetic_snapshot(catalogue())

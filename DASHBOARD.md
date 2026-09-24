@@ -1,8 +1,8 @@
-# FTSE 250 synthetic example dashboard
+# Simulated company dashboard
 
 The public GitHub Pages build uses **fictional, reproducible price and dividend
 histories**. No Yahoo prices are downloaded, fitted, cached or included in that
-build. Company names identify illustrative scenarios, not actual performance.
+build. All company names and ticker symbols are fictional.
 A separate explicit Yahoo mode remains available for local research.
 
 ## Synthetic dataset
@@ -12,12 +12,12 @@ observations per example, from 4 January 2016 to 31 December 2025, in GBP.
 
 | Example | Authored scenario |
 | --- | --- |
-| Greggs | Expansion, a sharp shared downturn, recovery and a later pullback |
-| Dunelm | Cyclical growth and larger cash distributions |
-| Softcat | Stronger long-term growth with technology-like volatility |
-| Currys | Long-term decline followed by a partial recovery |
-| Mondi | Cyclical growth followed by a sustained weaker period |
-| Rightmove | Growth followed by a flatter period |
+| Simulated Company A | Expansion, a sharp shared downturn, recovery and a later pullback |
+| Simulated Company B | Cyclical growth and larger cash distributions |
+| Simulated Company C | Stronger long-term growth with technology-like volatility |
+| Simulated Company D | Long-term decline followed by a partial recovery |
+| Simulated Company E | Cyclical growth followed by a sustained weaker period |
+| Simulated Company F | Growth followed by a flatter period |
 
 These broad trend shapes are hand-authored assumptions, **not a numerical fit
 or a claim about the companies' historical returns**. Starting levels, annual
@@ -65,7 +65,7 @@ Each snapshot and instrument, each CSV event and each Parquet metadata sidecar
 carries a synthetic flag/source. The JSON downloads carry simulation parameters
 or generator details; full assumptions remain in `synthetic.py`. Event amounts
 are fictional GBP per share, with fictional ex-dates, not actual payment dates.
-The original company names and ticker identifiers do not imply genuine prices.
+The SIM-A through SIM-F identifiers are fictional, not exchange tickers.
 
 The builder rejects mixing real and synthetic output directories and rejects
 `--previous` in synthetic mode. Use a fresh directory when changing sources.
@@ -74,11 +74,12 @@ synthetic provenance before uploading the site.
 
 ## Catalogue
 
-`config/ftse250-examples.json` contains six selected company examples, checked
-on 24 September 2026, with source links for their identities. This is a sample,
-not the full FTSE 250, a historical membership database, a recommendation or
-an index return series. Membership can change. The project is independent of
-FTSE Russell and LSEG; the names are descriptive references, not endorsements.
+`config/simulated-companies.json` defines Simulated Company A through F, using
+fictional identifiers `SIM-A` through `SIM-F`. No company profiles, issuer URLs,
+real tickers or index-membership claims are included in the public catalogue.
+The six scenarios illustrate different growth, decline and cash-yield patterns.
+Rebuilding replaces the generated corporate-action files, removing exports for
+identities that are no longer in the catalogue.
 
 ## Build and test
 
@@ -106,9 +107,13 @@ separation and dashboard controls. Existing coverage reporting remains enabled.
 ## Local Yahoo research mode
 
 ```bash
-uv run python -m agentic_data_pipeline.dashboard --data-source yahoo
+uv run python -m agentic_data_pipeline.dashboard --data-source yahoo --catalogue path/to/your-real-instruments.json
 python -m http.server --directory dashboard-local 8000
 ```
+
+Yahoo mode requires an explicit catalogue with real symbols; it never uses the
+fictional default catalogue. Use the same catalogue schema (checked_at, sources,
+and instruments with unique id, name, symbol and category fields).
 
 This explicitly downloads ten years of daily Yahoo histories, and defaults to
 `dashboard-local` rather than the public build directory. Optional
