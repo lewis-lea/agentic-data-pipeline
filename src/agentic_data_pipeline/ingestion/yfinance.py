@@ -134,10 +134,11 @@ class YFinanceClient:
         if not isinstance(amounts.index, pd.DatetimeIndex):
             raise YFinanceError("yfinance distributions must use a DatetimeIndex")
 
-        numeric = pd.to_numeric(amounts, errors="coerce")
-        if numeric.isna().any() or (~np.isfinite(numeric)).any():
+        numeric = pd.Series(pd.to_numeric(amounts, errors="coerce"), index=amounts.index, dtype=float)
+        numeric_values = numeric.to_numpy(dtype=float)
+        if numeric.isna().any() or (~np.isfinite(numeric_values)).any():
             raise YFinanceError("yfinance distributions contain non-numeric values")
-        if (numeric < 0).any():
+        if (numeric_values < 0).any():
             raise YFinanceError("yfinance distributions must not be negative")
 
         frame = pd.DataFrame({"cash_amount": numeric.astype(float)})
@@ -204,7 +205,10 @@ class YFinanceClient:
             raise YFinanceError("distribution retry loop exited unexpectedly")
         if frame.empty or "Dividends" not in frame.columns:
             raise YFinanceError("Dividend availability is unknown: no usable history returned")
-        return frame["Dividends"]
+        dividends = frame.loc[:, "Dividends"]
+        if not isinstance(dividends, pd.Series):
+            raise YFinanceError("Dividend history must be one-dimensional")
+        return dividends
 
     def get_actions(
         self, symbol: str, *, period: str = "max",
