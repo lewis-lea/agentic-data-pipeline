@@ -43,7 +43,9 @@ def generate_histories(seed: int = SEED) -> dict[str, pd.DataFrame]:
     dates = pd.bdate_range(START, END)
     x = np.arange(len(dates))
     anchors = pd.to_datetime([START] + [f"{year}-12-31" for year in range(2016, 2026)])
-    positions = np.interp(anchors.asi8, dates.asi8, x)
+    anchor_ns = anchors.to_numpy(dtype="datetime64[ns]").astype("int64")
+    date_ns = dates.to_numpy(dtype="datetime64[ns]").astype("int64")
+    positions = np.interp(anchor_ns, date_ns, x)
     common = _noise(np.random.default_rng(seed), len(dates), 0.006)
     # Authored abrupt downturn/recovery and a later inflation-like drawdown.
     shock_dates = pd.to_datetime(
@@ -58,7 +60,8 @@ def generate_histories(seed: int = SEED) -> dict[str, pd.DataFrame]:
             END,
         ]
     )
-    shocks = np.interp(dates.asi8, shock_dates.asi8, [0, 0, -0.42, 0, 0, -0.18, 0, 0])
+    shock_ns = shock_dates.to_numpy(dtype="datetime64[ns]").astype("int64")
+    shocks = np.interp(date_ns, shock_ns, [0, 0, -0.42, 0, 0, -0.18, 0, 0])
     result = {}
     for symbol, (initial, levels, cash_yield, sigma) in PROFILES.items():
         # Stable per-symbol streams: reordering/adding profiles cannot perturb others.
