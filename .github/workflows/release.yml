@@ -18,6 +18,10 @@ jobs:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --dev
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Type check
+        run: uv run pyright
       - name: Run unit tests
         run: uv run pytest tests -q -m "not integration"
 
@@ -41,7 +45,16 @@ jobs:
         run: |
           uv venv .package-test
           uv pip install --python .package-test/bin/python dist/*.whl
-          .package-test/bin/python -c "import agentic_data_pipeline"
+          .package-test/bin/python -c "import agentic_data_pipeline; print(agentic_data_pipeline.__version__)"
+      - name: Smoke-test installed wheel against Yahoo Finance
+        run: |
+          .package-test/bin/python - <<'PY'
+          from agentic_data_pipeline.ingestion import YFinanceClient
+          frame = YFinanceClient().get_history("MSFT", period="5d", interval="1d")
+          assert not frame.empty
+          assert {"open", "high", "low", "close", "volume", "source"} <= set(frame.columns)
+          print(frame.tail(1))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: agentic-data-pipeline-${{ github.ref_name }}
