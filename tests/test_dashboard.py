@@ -1,7 +1,7 @@
 """Offline regression checks for published histories and distributions."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -14,7 +14,7 @@ from agentic_data_pipeline.corporate_actions import create_corporate_actions
 from agentic_data_pipeline.ingestion import YFinanceClient, YFinanceError
 from agentic_data_pipeline.storage import ParquetStorage
 
-NOW = datetime(2026, 9, 4, tzinfo=timezone.utc)
+NOW = datetime(2026, 9, 4, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -144,13 +144,19 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
     assert dashboard.load_catalogue(path) == catalogue
     for change in ["duplicate", "empty_id", "symbol", "name", "category", "note"]:
         bad = json.loads(json.dumps(catalogue))
-        if change == "duplicate": bad["instruments"][1]["id"] = "a"
-        if change == "empty_id": bad["instruments"][0]["id"] = ""
-        if change == "symbol": bad["instruments"][1]["symbol"] = "A.L"
-        if change in {"name", "category"}: bad["instruments"][0][change] = ""
-        if change == "note": del bad["instruments"][1]["mapping_note"]
+        if change == "duplicate":
+            bad["instruments"][1]["id"] = "a"
+        if change == "empty_id":
+            bad["instruments"][0]["id"] = ""
+        if change == "symbol":
+            bad["instruments"][1]["symbol"] = "A.L"
+        if change in {"name", "category"}:
+            bad["instruments"][0][change] = ""
+        if change == "note":
+            del bad["instruments"][1]["mapping_note"]
         path.write_text(json.dumps(bad))
-        with pytest.raises(ValueError): dashboard.load_catalogue(path)
+        with pytest.raises(ValueError):
+            dashboard.load_catalogue(path)
     actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/simulated-companies.json")
     assert {i["symbol"] for i in actual["instruments"]} == {
         "SIM-A", "SIM-B", "SIM-C", "SIM-D", "SIM-E", "SIM-F"
@@ -164,12 +170,15 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
 
 
 def test_cli_writes_site_and_loads_optional_previous_snapshot(monkeypatch, tmp_path, catalogue, history):
-    path = tmp_path / "catalogue.json"; path.write_text(json.dumps(catalogue))
+    path = tmp_path / "catalogue.json"
+    path.write_text(json.dumps(catalogue))
     snapshot = dashboard.build_snapshot(catalogue, loader=lambda _: (history, {"currency": "USD"}))
-    build = Mock(return_value=snapshot); monkeypatch.setattr(dashboard, "build_snapshot", build)
+    build = Mock(return_value=snapshot)
+    monkeypatch.setattr(dashboard, "build_snapshot", build)
     for exists in [False, True]:
         previous = tmp_path / "previous.json"
-        if exists: previous.write_text(json.dumps(snapshot))
+        if exists:
+            previous.write_text(json.dumps(snapshot))
         dashboard.main(["--data-source", "yahoo", "--catalogue", str(path), "--output", str(tmp_path / "dist"), "--previous", str(previous)])
         assert build.call_args.kwargs["previous"] == (json.loads(previous.read_text()) if exists else None)
     assert (tmp_path / "dist/refresh-status.json").exists()
@@ -186,7 +195,8 @@ def test_actions_normalise_events_and_persist_missing_fields_as_unknown(history)
 
 
 def test_actions_distinguish_no_events_from_missing_provider_fields(history):
-    zeros = history.copy(); zeros[["Dividends", "Stock Splits", "Capital Gains"]] = 0
+    zeros = history.copy()
+    zeros[["Dividends", "Stock Splits", "Capital Gains"]] = 0
     known = create_corporate_actions(zeros, symbol="A")
     unknown = create_corporate_actions(history[["Close"]], symbol="A")
     assert known.empty and unknown.empty
@@ -196,13 +206,19 @@ def test_actions_distinguish_no_events_from_missing_provider_fields(history):
 
 def test_actions_validate_inputs_and_deduplicate_dates(history):
     for frame in [None, pd.DataFrame({"Dividends": [1]})]:
-        with pytest.raises(ValueError): create_corporate_actions(frame, symbol="A")
-    with pytest.raises(ValueError): create_corporate_actions(history, symbol=" ")
+        with pytest.raises(ValueError):
+            create_corporate_actions(frame, symbol="A")
+    with pytest.raises(ValueError):
+        create_corporate_actions(history, symbol=" ")
     for value in [-1, float("inf")]:
-        bad = history.copy(); bad["Dividends"] = value
-        with pytest.raises(ValueError, match="non-negative"): create_corporate_actions(bad, symbol="A")
-    bad = history.iloc[[1]].copy(); bad.index = pd.DatetimeIndex([pd.NaT])
-    with pytest.raises(ValueError, match="dates"): create_corporate_actions(bad, symbol="A")
+        bad = history.copy()
+        bad["Dividends"] = value
+        with pytest.raises(ValueError, match="non-negative"):
+            create_corporate_actions(bad, symbol="A")
+    bad = history.iloc[[1]].copy()
+    bad.index = pd.DatetimeIndex([pd.NaT])
+    with pytest.raises(ValueError, match="dates"):
+        create_corporate_actions(bad, symbol="A")
     assert len(create_corporate_actions(pd.concat([history, history]), symbol="A")) == 1
 
 
@@ -223,12 +239,15 @@ def test_client_actions_are_historical_and_use_the_existing_storage_contract(his
 def test_client_actions_handle_provider_failures_and_empty_histories():
     for response in [pd.DataFrame(), None]:
         with pytest.raises(YFinanceError, match="availability is unknown"):
-            YFinanceClient(history_loader=lambda *_a, **_k: response).get_actions("A")
-    with pytest.raises(YFinanceError): YFinanceClient(history_loader=Mock(side_effect=OSError())).get_actions("A")
-    with pytest.raises(ValueError): YFinanceClient().get_actions(" ")
+            YFinanceClient(history_loader=lambda *_a, response=response, **_k: response).get_actions("A")
+    with pytest.raises(YFinanceError):
+        YFinanceClient(history_loader=Mock(side_effect=OSError())).get_actions("A")
+    with pytest.raises(ValueError):
+        YFinanceClient().get_actions(" ")
 
 
 def test_default_client_actions_loader_attaches_quote_currency(monkeypatch, history):
-    ticker = Mock(history_metadata={"currency": "GBp"}); ticker.history.return_value = history
+    ticker = Mock(history_metadata={"currency": "GBp"})
+    ticker.history.return_value = history
     monkeypatch.setattr(dashboard.yf, "Ticker", Mock(return_value=ticker))
     assert YFinanceClient().get_actions("A.L").attrs["currency"] == "GBp"
