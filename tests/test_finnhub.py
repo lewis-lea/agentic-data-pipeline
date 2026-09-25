@@ -1,6 +1,6 @@
 """Tests for Finnhub ingestion and normalization."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 import pytest
@@ -29,7 +29,7 @@ def test_get_latest_normalizes_response() -> None:
     assert frame.iloc[0]["source"] == "finnhub"
     assert pd.isna(frame.iloc[0]["volume"])
     assert frame.index[0] == pd.Timestamp(
-        datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
+        datetime.fromtimestamp(1_700_000_000, tz=UTC)
     )
     assert captured == {
         "url": "https://finnhub.io/api/v1/quote",
