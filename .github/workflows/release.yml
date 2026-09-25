@@ -19,7 +19,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --dev
       - name: Lint
-        run: uv run ruff check src
+        run: uv run ruff check src tests
+      - name: Format check
+        run: uv run ruff format --check src tests
       - name: Type check
         run: uv run pyright
       - name: Run unit tests
