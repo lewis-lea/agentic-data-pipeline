@@ -31,6 +31,7 @@ packages = ["src/agentic_data_pipeline"]
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "python-dotenv>=1.0",
