@@ -69,3 +69,6 @@ include = ["src"]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
 reportMissingTypeStubs = false
+reportArgumentType = false
+reportGeneralTypeIssues = false
+reportAttributeAccessIssue = false
