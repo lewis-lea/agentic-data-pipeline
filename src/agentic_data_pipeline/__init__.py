@@ -1,5 +1,7 @@
 """Tools for ingesting, standardizing, analyzing, and persisting time-series data."""
 
+from importlib.metadata import PackageNotFoundError, version
+
 from agentic_data_pipeline.incremental import (
     update_yfinance_distributions,
     update_yfinance_market_data,
@@ -19,7 +21,13 @@ from agentic_data_pipeline.types import (
     validate_market_data,
 )
 
+try:
+    __version__ = version("agentic-data-pipeline")
+except PackageNotFoundError:
+    __version__ = "0+unknown"
+
 __all__ = [
+    "__version__",
     "DEFAULT_BENCHMARK",
     "DatasetKey",
     "MARKET_DATA_COLUMNS",
