@@ -15,7 +15,7 @@ import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import yfinance as yf
@@ -67,7 +67,7 @@ def serialise_history(frame: pd.DataFrame, metadata: dict[str, Any]) -> dict[str
         raise ValueError("No dated close-price history returned")
     factor = 0.01 if currency in {"GBp", "GBX"} else 1.0
     points: dict[str, float] = {}
-    for timestamp, close in frame["Close"].items():
+    for timestamp, close in zip(frame.index, frame["Close"].to_numpy(), strict=True):
         value = float(close)
         if pd.notna(timestamp) and math.isfinite(value) and value > 0:
             # UTC conversion would move London summer midnight to the day before.
@@ -76,7 +76,7 @@ def serialise_history(frame: pd.DataFrame, metadata: dict[str, Any]) -> dict[str
         raise ValueError("No finite positive close prices returned")
     adjusted = {}
     if "Adj Close" in frame:
-        for timestamp, close in frame["Adj Close"].items():
+        for timestamp, close in zip(frame.index, frame["Adj Close"].to_numpy(), strict=True):
             value = float(close)
             if pd.notna(timestamp) and math.isfinite(value) and value > 0:
                 adjusted[timestamp.date().isoformat()] = round(value * factor, 8)
@@ -127,7 +127,7 @@ def build_snapshot(
                 result["action_fields"] = actions.attrs["available_fields"]
                 result["actions"] = [
                     {
-                        "date": index.date().isoformat(),
+                        "date": cast(pd.Timestamp, index).date().isoformat(),
                         **{
                             key: float(value) if pd.notna(value) else None
                             for key, value in row.items()
@@ -339,7 +339,7 @@ def build_dashboard_series(
     for timestamp, row in history.iterrows():
         records.append(
             {
-                "date": pd.Timestamp(timestamp).date().isoformat(),
+                "date": cast(pd.Timestamp, timestamp).date().isoformat(),
                 "price": float(row["price"]),
                 "distribution": float(row["cash_distribution"]),
                 "price_index": float(row["price_index"]),
