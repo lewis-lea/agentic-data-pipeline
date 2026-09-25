@@ -6,7 +6,7 @@ import json
 import os
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -284,7 +284,7 @@ class ParquetStorage:
             "rows": len(frame),
             "min_timestamp": self._timestamp_or_none(frame.index.min()),
             "max_timestamp": self._timestamp_or_none(frame.index.max()),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
             "dataframe_attrs": self._json_safe(dict(frame.attrs)),
         }
         self._metadata_path(path).write_text(
