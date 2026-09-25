@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
@@ -44,7 +44,7 @@ class DuckDBStorage:
             raise ValueError("DuckDBStorage currently supports the raw layer only")
         validated = validate_market_data(frame.copy())
         symbol = str(validated.attrs["symbol"]).strip().upper()
-        available = pd.Timestamp(available_timestamp or datetime.now(timezone.utc))
+        available = pd.Timestamp(available_timestamp or datetime.now(UTC))
         available = available.tz_localize("UTC") if available.tzinfo is None else available.tz_convert("UTC")
         records = validated.reset_index().rename(columns={"timestamp": "event_timestamp"})
         records["available_timestamp"] = available
