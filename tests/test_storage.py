@@ -39,7 +39,9 @@ def test_market_data_round_trip_uses_interval_first_layout(tmp_path):
     loaded = storage.load_market_data(source="yfinance", interval="1d", symbol="NVDA")
 
     assert path == tmp_path / "raw" / "yfinance" / "1d" / "NVDA.parquet"
-    pdt.assert_frame_equal(loaded, frame)
+    pdt.assert_frame_equal(loaded.drop(columns="available_timestamp"), frame)
+    assert loaded["available_timestamp"].notna().all()
+    assert str(loaded["available_timestamp"].dt.tz) == "UTC"
     assert loaded.attrs == {"currency": "USD", "symbol": "NVDA", "interval": "1d"}
 
     metadata = json.loads(path.with_suffix(".metadata.json").read_text())
