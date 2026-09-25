@@ -12,11 +12,11 @@ license = { file = "LICENSE" }
 dependencies = [
     "duckdb>=1.4",
     "numpy>=2.0",
-    "pandas>=2.2",
+    "pandas>=2.2,<3.0",
     "pyarrow>=17.0",
-    "statsmodels>=0.14",
+    "statsmodels>=0.14,<0.15",
     "ta>=0.11",
-    "yfinance>=0.2",
+    "yfinance>=0.2,<1.0",
 ]
 
 [project.optional-dependencies]
