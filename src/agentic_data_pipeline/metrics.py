@@ -9,7 +9,7 @@ import pandas as pd
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import acf, adfuller, kpss, pacf
 from ta.momentum import RSIIndicator
-from ta.trend import EMAIndicator, MACD, SMAIndicator
+from ta.trend import MACD, EMAIndicator, SMAIndicator
 from ta.volatility import AverageTrueRange, BollingerBands
 from ta.volume import OnBalanceVolumeIndicator
 
