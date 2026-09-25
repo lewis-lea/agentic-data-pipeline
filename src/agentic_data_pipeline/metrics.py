@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -98,13 +98,15 @@ def time_series_diagnostics(
         raise ValueError("nlags must be positive")
 
     close = frame["close"].astype(float)
-    returns = np.log(close / close.shift(1)).dropna()
+    returns = pd.Series(np.log(close / close.shift(1)), index=close.index, dtype=float).dropna()
     if len(returns) < max(10, nlags + 2):
         raise ValueError("not enough observations for time-series diagnostics")
 
     effective_lags = min(nlags, len(returns) // 2 - 1)
-    adf_result = adfuller(returns, autolag="AIC")
-    kpss_result = kpss(returns, regression="c", nlags="auto")
+    # statsmodels exposes several overloaded tuple shapes; these options have stable
+    # runtime shapes that we validate through the accesses below.
+    adf_result = cast(Any, adfuller(returns, autolag="AIC"))
+    kpss_result = cast(Any, kpss(returns, regression="c", nlags="auto"))
 
     return {
         "observations": int(len(returns)),
@@ -120,8 +122,8 @@ def time_series_diagnostics(
             "used_lag": int(kpss_result[2]),
             "critical_values": {key: float(value) for key, value in kpss_result[3].items()},
         },
-        "acf": acf(returns, nlags=effective_lags, fft=True).tolist(),
-        "pacf": pacf(returns, nlags=effective_lags, method="ywm").tolist(),
+        "acf": np.asarray(acf(returns, nlags=effective_lags, fft=True)).tolist(),
+        "pacf": np.asarray(pacf(returns, nlags=effective_lags, method="ywm")).tolist(),
     }
 
 
