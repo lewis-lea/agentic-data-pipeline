@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 
@@ -64,8 +66,8 @@ def build_return_history(
 
             grouped = amounts.groupby(distributions.index).sum().sort_index()
             for timestamp, amount in grouped.items():
-                distribution_timestamp = pd.Timestamp(timestamp)
-                position = market.index.searchsorted(distribution_timestamp, side="left")
+                distribution_timestamp = cast(pd.Timestamp, timestamp)
+                position = int(market.index.searchsorted(distribution_timestamp, side="left"))
                 if position < len(market.index):
                     cash.iloc[position] += float(amount)
 
