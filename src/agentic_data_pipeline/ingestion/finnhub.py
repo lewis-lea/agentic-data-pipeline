@@ -6,7 +6,7 @@ import json
 import os
 import time
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -140,7 +140,7 @@ class FinnhubClient:
             if timestamp <= 0:
                 raise ValueError("timestamp must be positive")
             index = pd.DatetimeIndex(
-                [datetime.fromtimestamp(timestamp, tz=timezone.utc)],
+                [datetime.fromtimestamp(timestamp, tz=UTC)],
                 name="timestamp",
             )
             raw = pd.DataFrame(
