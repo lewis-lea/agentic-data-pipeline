@@ -7,7 +7,9 @@ from datetime import date, datetime
 import pandas as pd
 
 from agentic_data_pipeline.ingestion import YFinanceClient
-from agentic_data_pipeline.storage import ParquetStorage
+from agentic_data_pipeline.storage import DuckDBStorage, ParquetStorage
+
+MarketStorage = ParquetStorage | DuckDBStorage
 
 
 def update_yfinance_market_data(
@@ -17,7 +19,7 @@ def update_yfinance_market_data(
     initial_period: str = "5y",
     end: str | date | datetime | None = None,
     auto_adjust: bool = False,
-    storage: ParquetStorage | None = None,
+    storage: MarketStorage | None = None,
     client: YFinanceClient | None = None,
     layer: str = "raw",
 ) -> pd.DataFrame:
@@ -42,14 +44,18 @@ def update_yfinance_market_data(
 
     resolved_storage = storage or ParquetStorage()
     resolved_client = client or YFinanceClient()
-    path = resolved_storage.market_data_path(
-        source="yfinance",
-        interval=interval,
-        symbol=normalized_symbol,
-        layer=layer,
-    )
+    if isinstance(resolved_storage, DuckDBStorage):
+        latest_timestamp = resolved_storage.latest_event_timestamp(
+            source="yfinance", interval=interval, symbol=normalized_symbol
+        )
+        exists = latest_timestamp is not None
+    else:
+        path = resolved_storage.market_data_path(
+            source="yfinance", interval=interval, symbol=normalized_symbol, layer=layer
+        )
+        exists = path.exists()
 
-    if not path.exists():
+    if not exists:
         initial = resolved_client.get_history(
             normalized_symbol,
             period=initial_period,
@@ -116,7 +122,7 @@ def update_yfinance_distributions(
     symbol: str,
     *,
     end: str | date | datetime | None = None,
-    storage: ParquetStorage | None = None,
+    storage: MarketStorage | None = None,
     client: YFinanceClient | None = None,
     layer: str = "raw",
 ) -> pd.DataFrame:
