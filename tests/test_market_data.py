@@ -66,3 +66,41 @@ def test_market_data_from_multiple_sources_can_be_concatenated() -> None:
 
     assert combined["source"].tolist() == ["yfinance", "finnhub"]
     assert pd.isna(combined.iloc[1]["volume"])
+
+
+def _valid_market_frame() -> pd.DataFrame:
+    frame = pd.DataFrame(
+        {
+            "open": [10.0],
+            "high": [11.0],
+            "low": [9.0],
+            "close": [10.5],
+            "volume": [1000.0],
+            "source": ["test"],
+        },
+        index=pd.DatetimeIndex(["2026-01-02"], tz="UTC", name="timestamp"),
+    )
+    frame.attrs["symbol"] = "AAPL"
+    return frame
+
+
+def test_validate_market_data_rejects_non_finite_ohlc() -> None:
+    frame = _valid_market_frame()
+    frame.loc[frame.index[0], "close"] = float("inf")
+    with pytest.raises(ValueError, match="finite"):
+        validate_market_data(frame)
+
+
+def test_validate_market_data_rejects_impossible_ohlc_bar() -> None:
+    frame = _valid_market_frame()
+    frame.loc[frame.index[0], "high"] = 10.25
+    with pytest.raises(ValueError, match="high"):
+        validate_market_data(frame)
+
+
+def test_validate_market_data_rejects_duplicate_timestamps() -> None:
+    frame = _valid_market_frame()
+    duplicated = pd.concat([frame, frame])
+    duplicated.attrs = dict(frame.attrs)
+    with pytest.raises(ValueError, match="unique"):
+        validate_market_data(duplicated)
