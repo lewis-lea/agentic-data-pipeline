@@ -14,7 +14,7 @@ from agentic_data_pipeline.metrics import (
     time_series_diagnostics,
 )
 from agentic_data_pipeline.returns import build_return_history
-from agentic_data_pipeline.storage import DatasetKey, ParquetStorage
+from agentic_data_pipeline.storage import DatasetKey, DuckDBStorage, ParquetStorage
 from agentic_data_pipeline.types import (
     MARKET_DATA_COLUMNS,
     create_market_data,
@@ -30,6 +30,7 @@ __all__ = [
     "__version__",
     "DEFAULT_BENCHMARK",
     "DatasetKey",
+    "DuckDBStorage",
     "MARKET_DATA_COLUMNS",
     "ParquetStorage",
     "add_benchmark_metrics",
