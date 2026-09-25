@@ -30,7 +30,16 @@ jobs:
       - name: Install dependencies
         run: ~/.local/bin/uv sync --dev
 
-      - name: Lint\n        run: ~/.local/bin/uv run ruff check src tests\n\n      - name: Type check\n        run: ~/.local/bin/uv run pyright\n\n      - name: Prepare test-results directory\n        run: mkdir -p test-results\n\n      # Unit tests deliberately exclude tests that call external services.
+      - name: Lint
+        run: ~/.local/bin/uv run ruff check src tests
+
+      - name: Type check
+        run: ~/.local/bin/uv run pyright
+
+      - name: Prepare test-results directory
+        run: mkdir -p test-results
+
+      # Unit tests deliberately exclude tests that call external services.
       - name: Run unit tests
         run: |
           set -o pipefail
@@ -302,7 +311,8 @@ jobs:
             echo "Codex returned an empty triage report." >&2
             exit 1
           fi
-          printf '%s\n' "$CODEX_TRIAGE" > TRIAGE.md
+          printf '%s
+' "$CODEX_TRIAGE" > TRIAGE.md
 
       - name: Upload triage report
         uses: actions/upload-artifact@v4
@@ -568,7 +578,11 @@ jobs:
             --base "${BASE_BRANCH}" \
             --head "${FIX_BRANCH}" \
             --title "Automated remediation for #${ISSUE_NUMBER}" \
-            --body "Single automated remediation attempt for #${ISSUE_NUMBER}.\n\nThe branch was produced from the failing commit by Codex using the CI triage report and test artifacts. CI will run on this branch, but failures on \`fix/issue-*\` branches are explicitly prevented from creating new CI issues or triggering another remediation cycle.\n\nReview the generated changes and CI results before merging.")
+            --body "Single automated remediation attempt for #${ISSUE_NUMBER}.
+
+The branch was produced from the failing commit by Codex using the CI triage report and test artifacts. CI will run on this branch, but failures on \`fix/issue-*\` branches are explicitly prevented from creating new CI issues or triggering another remediation cycle.
+
+Review the generated changes and CI results before merging.")
 
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPOSITORY}" \
@@ -576,4 +590,8 @@ jobs:
 
           gh issue comment "${ISSUE_NUMBER}" \
             --repo "${REPOSITORY}" \
-            --body "Automated fix branch: \`${FIX_BRANCH}\`\n\nPull request: ${PR_URL}\n\nThis is the only automated remediation attempt for this issue. If its CI fails, no new CI issue or remediation cycle will be created from that branch."
+            --body "Automated fix branch: \`${FIX_BRANCH}\`
+
+Pull request: ${PR_URL}
+
+This is the only automated remediation attempt for this issue. If its CI fails, no new CI issue or remediation cycle will be created from that branch."
