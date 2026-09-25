@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from datetime import date, datetime
-import time
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 from yfinance.exceptions import YFRateLimitError
 
-from agentic_data_pipeline.types import create_market_data
 from agentic_data_pipeline.corporate_actions import create_corporate_actions
-import numpy as np
+from agentic_data_pipeline.types import create_market_data
 
 HistoryLoader = Callable[..., pd.DataFrame]
 DistributionLoader = Callable[..., pd.Series | pd.DataFrame]
