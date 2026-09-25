@@ -117,6 +117,8 @@ class ParquetStorage:
 
         frame.attrs["symbol"] = symbol
         frame.attrs["interval"] = interval
+        frame.index.name = "event_timestamp"
+        frame["available_timestamp"] = pd.Timestamp.now(tz="UTC")
         path.parent.mkdir(parents=True, exist_ok=True)
         self._atomic_write(path, frame, key, layer=layer)
         return path
@@ -132,6 +134,8 @@ class ParquetStorage:
         key = DatasetKey(source=source, dataset="market_data", symbol=symbol, interval=interval)
         path = self._market_path(key, layer=layer)
         frame = pd.read_parquet(path)
+        if frame.index.name == "event_timestamp":
+            frame.index.name = "timestamp"
         metadata = self._read_metadata(path)
         frame.attrs = dict(metadata.get("dataframe_attrs", {}))
         frame.attrs["symbol"] = key.normalized_symbol
