@@ -13,7 +13,7 @@ import logging
 import math
 import shutil
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -91,7 +91,7 @@ def build_snapshot(
     previous: dict[str, Any] | None = None, now: datetime | None = None,
 ) -> dict[str, Any]:
     """Isolate provider failures and retain explicitly stale last-good histories."""
-    timestamp = (now or datetime.now(timezone.utc)).isoformat()
+    timestamp = (now or datetime.now(UTC)).isoformat()
     old = {}
     if previous and previous.get("price_basis") == PRICE_BASIS:
         old = {item["id"]: item for item in previous.get("instruments", [])}
@@ -253,11 +253,11 @@ def build_dashboard_payload(
 ) -> dict[str, Any]:
     """Wrap serialized instrument records with stable dashboard metadata."""
 
-    timestamp = generated_at or datetime.now(timezone.utc)
+    timestamp = generated_at or datetime.now(UTC)
     if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
+        timestamp = timestamp.replace(tzinfo=UTC)
     else:
-        timestamp = timestamp.astimezone(timezone.utc)
+        timestamp = timestamp.astimezone(UTC)
 
     return {
         "generated_at": timestamp.isoformat(),
