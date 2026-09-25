@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
 from typing import Any
@@ -247,16 +248,24 @@ class FinnhubClient:
             f"{url}?{urlencode(params)}",
             headers={"Accept": "application/json", "X-Finnhub-Token": self.api_key},
         )
-        try:
-            with urlopen(request, timeout=timeout) as response:  # noqa: S310
-                payload = json.load(response)
-        except HTTPError as exc:
-            raise FinnhubApiError(f"Finnhub HTTP error {exc.code}") from exc
-        except (URLError, TimeoutError) as exc:
-            detail = exc.reason if isinstance(exc, URLError) else exc
-            raise FinnhubApiError(f"Could not reach Finnhub: {detail}") from exc
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise FinnhubApiError("Finnhub returned invalid JSON") from exc
+        payload: Any = None
+        for attempt in range(3):
+            try:
+                with urlopen(request, timeout=timeout) as response:  # noqa: S310
+                    payload = json.load(response)
+                break
+            except HTTPError as exc:
+                if exc.code != 429 and exc.code < 500:
+                    raise FinnhubApiError(f"Finnhub HTTP error {exc.code}") from exc
+                if attempt == 2:
+                    raise FinnhubApiError(f"Finnhub HTTP error {exc.code} after retries") from exc
+            except (URLError, TimeoutError) as exc:
+                if attempt == 2:
+                    detail = exc.reason if isinstance(exc, URLError) else exc
+                    raise FinnhubApiError(f"Could not reach Finnhub after retries: {detail}") from exc
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                raise FinnhubApiError("Finnhub returned invalid JSON") from exc
+            time.sleep(0.5 * (2**attempt))
         if not isinstance(payload, (dict, list)):
             raise FinnhubApiError("Finnhub response must be a JSON object or array")
         return payload
