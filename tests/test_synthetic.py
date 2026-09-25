@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from agentic_data_pipeline import dashboard
-from agentic_data_pipeline.synthetic import build_synthetic_snapshot, generate_histories, PROFILES
+from agentic_data_pipeline.synthetic import PROFILES, build_synthetic_snapshot, generate_histories
 from agentic_data_pipeline.storage import ParquetStorage
 
 ROOT = Path(__file__).parents[1]
