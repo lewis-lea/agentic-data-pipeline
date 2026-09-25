@@ -89,8 +89,8 @@ def validate_market_data(frame: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("low must be less than or equal to open, high and close")
 
     volume = pd.to_numeric(frame["volume"], errors="coerce")
-    non_null_volume = volume.dropna()
-    if not np.isfinite(non_null_volume.to_numpy(dtype=float)).all() or (non_null_volume < 0).any():
+    non_null_volume = volume.dropna().to_numpy(dtype=float)
+    if not np.isfinite(non_null_volume).all() or (non_null_volume < 0).any():
         raise ValueError("volume must be finite and non-negative when present")
     if frame["source"].isna().any() or (frame["source"].astype(str).str.strip() == "").any():
         raise ValueError("source must not be empty")
