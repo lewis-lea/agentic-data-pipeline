@@ -33,12 +33,13 @@ def create_market_data(
     if missing:
         raise ValueError(f"DataFrame is missing required columns: {', '.join(sorted(missing))}")
 
-    result = pd.DataFrame(index=pd.DatetimeIndex(pd.to_datetime(frame.index)))
-    if result.index.tz is None:
-        result.index = result.index.tz_localize("UTC")
+    index = pd.DatetimeIndex(pd.to_datetime(frame.index))
+    if index.tz is None:
+        index = index.tz_localize("UTC")
     else:
-        result.index = result.index.tz_convert("UTC")
-    result.index.name = "timestamp"
+        index = index.tz_convert("UTC")
+    index.name = "timestamp"
+    result = pd.DataFrame(index=index)
 
     for column in ("open", "high", "low", "close"):
         result[column] = pd.to_numeric(frame[normalized_columns[column]], errors="raise").to_numpy()
@@ -54,7 +55,7 @@ def create_market_data(
     else:
         raise ValueError("source must be provided or present in the DataFrame")
 
-    result.attrs = dict(metadata or {})
+    result.attrs.update(dict(metadata or {}))
     result.attrs["symbol"] = normalized_symbol
     if interval is not None:
         result.attrs["interval"] = interval
