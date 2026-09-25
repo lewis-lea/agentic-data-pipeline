@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import date, datetime
+import time
 from typing import Any
 
 import pandas as pd
 import yfinance as yf
+from yfinance.exceptions import YFRateLimitError
 
 from agentic_data_pipeline.types import create_market_data
 from agentic_data_pipeline.corporate_actions import create_corporate_actions
@@ -167,10 +169,17 @@ class YFinanceClient:
     @staticmethod
     def _load_history(symbol: str, **kwargs: Any) -> pd.DataFrame:
         ticker = yf.Ticker(symbol)
-        frame = ticker.history(**kwargs)
-        if kwargs.get("actions"):
-            frame.attrs["currency"] = ticker.history_metadata.get("currency")
-        return frame
+        for attempt in range(3):
+            try:
+                frame = ticker.history(**kwargs)
+                if kwargs.get("actions"):
+                    frame.attrs["currency"] = ticker.history_metadata.get("currency")
+                return frame
+            except (YFRateLimitError, TimeoutError):
+                if attempt == 2:
+                    raise
+                time.sleep(0.5 * (2**attempt))
+        raise YFinanceError("history retry loop exited unexpectedly")
 
     @staticmethod
     def _load_distributions(symbol: str, **kwargs: Any) -> pd.Series:
@@ -182,7 +191,17 @@ class YFinanceClient:
             history_kwargs.update(kwargs)
         else:
             history_kwargs["period"] = "max"
-        frame = yf.Ticker(symbol).history(**history_kwargs)
+        ticker = yf.Ticker(symbol)
+        for attempt in range(3):
+            try:
+                frame = ticker.history(**history_kwargs)
+                break
+            except (YFRateLimitError, TimeoutError):
+                if attempt == 2:
+                    raise
+                time.sleep(0.5 * (2**attempt))
+        else:
+            raise YFinanceError("distribution retry loop exited unexpectedly")
         if frame.empty or "Dividends" not in frame.columns:
             raise YFinanceError("Dividend availability is unknown: no usable history returned")
         return frame["Dividends"]
