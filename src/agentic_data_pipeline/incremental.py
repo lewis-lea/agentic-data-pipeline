@@ -122,7 +122,7 @@ def update_yfinance_distributions(
     symbol: str,
     *,
     end: str | date | datetime | None = None,
-    storage: MarketStorage | None = None,
+    storage: ParquetStorage | None = None,
     client: YFinanceClient | None = None,
     layer: str = "raw",
 ) -> pd.DataFrame:
