@@ -8,7 +8,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -304,9 +304,12 @@ class ParquetStorage:
 
     @staticmethod
     def _timestamp_or_none(value: object) -> str | None:
-        if value is None or pd.isna(value):
+        if value is None:
             return None
-        return pd.Timestamp(value).isoformat()
+        timestamp = cast(pd.Timestamp, value)
+        if pd.isna(timestamp):
+            return None
+        return timestamp.isoformat()
 
     @classmethod
     def _json_safe(cls, value: Any) -> Any:
