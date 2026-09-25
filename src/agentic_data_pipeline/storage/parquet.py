@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -117,8 +118,7 @@ class ParquetStorage:
         frame.attrs["symbol"] = symbol
         frame.attrs["interval"] = interval
         path.parent.mkdir(parents=True, exist_ok=True)
-        frame.to_parquet(path)
-        self._write_metadata(path, frame, key, layer=layer)
+        self._atomic_write(path, frame, key, layer=layer)
         return path
 
     def load_market_data(
@@ -183,8 +183,7 @@ class ParquetStorage:
             frame.attrs = attrs
 
         path.parent.mkdir(parents=True, exist_ok=True)
-        frame.to_parquet(path)
-        self._write_metadata(path, frame, key, layer=layer)
+        self._atomic_write(path, frame, key, layer=layer)
         return path
 
     def load_dataset(
@@ -235,6 +234,33 @@ class ParquetStorage:
     @staticmethod
     def _metadata_path(path: Path) -> Path:
         return path.with_suffix(".metadata.json")
+
+    def _atomic_write(
+        self,
+        path: Path,
+        frame: pd.DataFrame,
+        key: DatasetKey,
+        *,
+        layer: str,
+    ) -> None:
+        """Stage data and metadata before replacing the live dataset files."""
+        metadata_path = self._metadata_path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=path.parent, prefix=".dataset-") as temp_dir:
+            staged_data = Path(temp_dir) / path.name
+            staged_metadata = Path(temp_dir) / metadata_path.name
+            frame.to_parquet(staged_data)
+            self._write_metadata(staged_data, frame, key, layer=layer)
+            generated_metadata = self._metadata_path(staged_data)
+            generated_metadata.replace(staged_metadata)
+
+            # Validate staged bytes before exposing them. os.replace/Path.replace
+            # is atomic for each file on the same filesystem.
+            pd.read_parquet(staged_data)
+            json.loads(staged_metadata.read_text(encoding="utf-8"))
+
+            staged_data.replace(path)
+            staged_metadata.replace(metadata_path)
 
     def _write_metadata(
         self,
