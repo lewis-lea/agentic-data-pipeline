@@ -22,8 +22,8 @@ import yfinance as yf
 from yfinance.exceptions import YFRateLimitError
 
 from agentic_data_pipeline.corporate_actions import create_corporate_actions
-from agentic_data_pipeline.storage import ParquetStorage
 from agentic_data_pipeline.returns import build_return_history
+from agentic_data_pipeline.storage import ParquetStorage
 
 LOGGER = logging.getLogger(__name__)
 HistoryLoader = Callable[[str], tuple[pd.DataFrame, dict[str, Any]]]
