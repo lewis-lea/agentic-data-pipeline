@@ -111,9 +111,7 @@ def test_invalid_distribution_data_is_rejected() -> None:
     with pytest.raises(ValueError, match="DatetimeIndex"):
         build_return_history(market, pd.DataFrame({"cash_amount": [1.0]}))
 
-    missing = pd.DataFrame(
-        {"other": [1.0]}, index=pd.DatetimeIndex(["2026-01-01"])
-    )
+    missing = pd.DataFrame({"other": [1.0]}, index=pd.DatetimeIndex(["2026-01-01"]))
     with pytest.raises(ValueError, match="cash_amount"):
         build_return_history(market, missing)
 

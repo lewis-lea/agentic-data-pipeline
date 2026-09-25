@@ -51,9 +51,24 @@ def test_add_stock_metrics_appends_expected_features_and_preserves_metadata() ->
     frame = _market_frame()
     enriched = add_stock_metrics(frame)
     expected = {
-        "return", "log_return", "cumulative_return", "sma_20", "sma_50", "ema_20",
-        "volatility_20", "momentum_20", "rsi_14", "macd", "macd_signal", "macd_diff",
-        "atr_14", "bollinger_mid", "bollinger_high", "bollinger_low", "drawdown", "obv",
+        "return",
+        "log_return",
+        "cumulative_return",
+        "sma_20",
+        "sma_50",
+        "ema_20",
+        "volatility_20",
+        "momentum_20",
+        "rsi_14",
+        "macd",
+        "macd_signal",
+        "macd_diff",
+        "atr_14",
+        "bollinger_mid",
+        "bollinger_high",
+        "bollinger_low",
+        "drawdown",
+        "obv",
     }
     assert expected.issubset(enriched.columns)
     assert enriched.attrs == frame.attrs

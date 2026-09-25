@@ -47,9 +47,7 @@ def distribution_frame(
 
 
 def test_first_distribution_update_persists_full_history(tmp_path) -> None:
-    client = FakeDistributionClient(
-        [distribution_frame(["2026-01-15", "2026-04-15"], [0.2, 0.25])]
-    )
+    client = FakeDistributionClient([distribution_frame(["2026-01-15", "2026-04-15"], [0.2, 0.25])])
     storage = ParquetStorage(tmp_path)
 
     result = update_yfinance_distributions(
@@ -60,9 +58,7 @@ def test_first_distribution_update_persists_full_history(tmp_path) -> None:
     )
 
     assert result["cash_amount"].tolist() == [0.2, 0.25]
-    assert client.calls == [
-        {"symbol": "ABC", "start": None, "end": "2026-06-01"}
-    ]
+    assert client.calls == [{"symbol": "ABC", "start": None, "end": "2026-06-01"}]
     assert storage.dataset_path(
         source="yfinance",
         dataset="distributions",
@@ -80,9 +76,7 @@ def test_incremental_distribution_update_refetches_boundary_and_replaces_it(tmp_
         symbol="ABC",
     )
 
-    client = FakeDistributionClient(
-        [distribution_frame(["2026-04-15", "2026-07-15"], [0.3, 0.35])]
-    )
+    client = FakeDistributionClient([distribution_frame(["2026-04-15", "2026-07-15"], [0.3, 0.35])])
     result = update_yfinance_distributions(
         "ABC",
         storage=storage,

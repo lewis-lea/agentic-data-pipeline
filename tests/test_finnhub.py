@@ -14,8 +14,14 @@ def test_get_latest_normalizes_response() -> None:
     def transport(url: str, params: dict[str, str], timeout: float) -> dict[str, object]:
         captured.update(url=url, params=params, timeout=timeout)
         return {
-            "c": 130.25, "d": 2.5, "dp": 1.96, "h": 131.0, "l": 127.5,
-            "o": 128.0, "pc": 127.75, "t": 1_700_000_000,
+            "c": 130.25,
+            "d": 2.5,
+            "dp": 1.96,
+            "h": 131.0,
+            "l": 127.5,
+            "o": 128.0,
+            "pc": 127.75,
+            "t": 1_700_000_000,
         }
 
     frame = FinnhubClient("secret", timeout=3, transport=transport).get_latest(" nvda ")
@@ -28,9 +34,7 @@ def test_get_latest_normalizes_response() -> None:
     assert frame.iloc[0]["close"] == 130.25
     assert frame.iloc[0]["source"] == "finnhub"
     assert pd.isna(frame.iloc[0]["volume"])
-    assert frame.index[0] == pd.Timestamp(
-        datetime.fromtimestamp(1_700_000_000, tz=UTC)
-    )
+    assert frame.index[0] == pd.Timestamp(datetime.fromtimestamp(1_700_000_000, tz=UTC))
     assert captured == {
         "url": "https://finnhub.io/api/v1/quote",
         "params": {"symbol": "NVDA"},
@@ -56,12 +60,20 @@ def test_get_recommendation_trends_normalizes_monthly_series() -> None:
 
     assert frame.attrs == {"symbol": "NVDA", "frequency": "monthly"}
     assert list(frame.columns) == [
-        "strong_buy", "buy", "hold", "sell", "strong_sell",
-        "analyst_count", "analyst_sentiment", "source",
+        "strong_buy",
+        "buy",
+        "hold",
+        "sell",
+        "strong_sell",
+        "analyst_count",
+        "analyst_sentiment",
+        "source",
     ]
     assert frame.index.tz is not None
     assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "analyst_count"] == 10
-    assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "analyst_sentiment"] == pytest.approx(0.65)
+    assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "analyst_sentiment"] == pytest.approx(
+        0.65
+    )
 
 
 def test_get_insider_sentiment_normalizes_monthly_series() -> None:
@@ -84,9 +96,7 @@ def test_get_insider_sentiment_normalizes_monthly_series() -> None:
     assert frame.attrs == {"symbol": "NVDA", "frequency": "monthly"}
     assert list(frame.columns) == ["mspr", "change", "source"]
     assert frame.loc[pd.Timestamp("2026-08-01", tz="UTC"), "mspr"] == 12.25
-    assert captured["params"] == {
-        "symbol": "NVDA", "from": "2026-07-01", "to": "2026-08-31"
-    }
+    assert captured["params"] == {"symbol": "NVDA", "from": "2026-07-01", "to": "2026-08-31"}
 
 
 def test_get_latest_rejects_incomplete_response() -> None:

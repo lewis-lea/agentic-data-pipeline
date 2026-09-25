@@ -121,9 +121,7 @@ class YFinanceClient:
             elif raw.empty:
                 amounts = pd.Series(dtype=float, index=raw.index)
             else:
-                raise YFinanceError(
-                    "yfinance distribution response must contain Dividends"
-                )
+                raise YFinanceError("yfinance distribution response must contain Dividends")
         elif isinstance(raw, pd.Series):
             amounts = raw
         else:
@@ -134,7 +132,9 @@ class YFinanceClient:
         if not isinstance(amounts.index, pd.DatetimeIndex):
             raise YFinanceError("yfinance distributions must use a DatetimeIndex")
 
-        numeric = pd.Series(pd.to_numeric(amounts, errors="coerce"), index=amounts.index, dtype=float)
+        numeric = pd.Series(
+            pd.to_numeric(amounts, errors="coerce"), index=amounts.index, dtype=float
+        )
         numeric_values = numeric.to_numpy(dtype=float)
         if numeric.isna().any() or (~np.isfinite(numeric_values)).any():
             raise YFinanceError("yfinance distributions contain non-numeric values")
@@ -211,7 +211,10 @@ class YFinanceClient:
         return dividends
 
     def get_actions(
-        self, symbol: str, *, period: str = "max",
+        self,
+        symbol: str,
+        *,
+        period: str = "max",
         start: str | date | datetime | None = None,
         end: str | date | datetime | None = None,
     ) -> pd.DataFrame:
@@ -237,4 +240,6 @@ class YFinanceClient:
                 history, symbol=normalized_symbol, currency=history.attrs.get("currency")
             )
         except Exception as exc:
-            raise YFinanceError(f"Could not retrieve actions for {normalized_symbol}: {exc}") from exc
+            raise YFinanceError(
+                f"Could not retrieve actions for {normalized_symbol}: {exc}"
+            ) from exc

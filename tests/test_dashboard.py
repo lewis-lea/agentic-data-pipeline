@@ -19,27 +19,47 @@ NOW = datetime(2026, 9, 4, tzinfo=UTC)
 
 @pytest.fixture
 def history():
-    return pd.DataFrame({"Close": [1000., 1100.], "Adj Close": [900., 1000.],
-                         "Dividends": [0., 15.], "Stock Splits": [0., 2.],
-                         "Capital Gains": [0., 5.]},
-                        index=pd.date_range("2026-08-03", periods=2, tz="Europe/London"))
+    return pd.DataFrame(
+        {
+            "Close": [1000.0, 1100.0],
+            "Adj Close": [900.0, 1000.0],
+            "Dividends": [0.0, 15.0],
+            "Stock Splits": [0.0, 2.0],
+            "Capital Gains": [0.0, 5.0],
+        },
+        index=pd.date_range("2026-08-03", periods=2, tz="Europe/London"),
+    )
 
 
 @pytest.fixture
 def catalogue():
-    return {"checked_at": "2026-09-04", "sources": [], "instruments": [
-        {"id": "a", "name": "A", "category": "Shares", "symbol": "A.L"},
-        {"id": "b", "name": "B", "category": "Funds", "symbol": None,
-         "mapping_note": "Unknown share class"}]}
+    return {
+        "checked_at": "2026-09-04",
+        "sources": [],
+        "instruments": [
+            {"id": "a", "name": "A", "category": "Shares", "symbol": "A.L"},
+            {
+                "id": "b",
+                "name": "B",
+                "category": "Funds",
+                "symbol": None,
+                "mapping_note": "Unknown share class",
+            },
+        ],
+    }
 
 
 def test_snapshot_preserves_local_dates_pence_and_separate_adjusted_prices(history, catalogue):
-    result = dashboard.build_snapshot(catalogue, loader=lambda _: (history, {"currency": "GBp"}), now=NOW)
+    result = dashboard.build_snapshot(
+        catalogue, loader=lambda _: (history, {"currency": "GBp"}), now=NOW
+    )
     a, b = result["instruments"]
-    assert a["points"] == [("2026-08-03", 10.), ("2026-08-04", 11.)]
-    assert a["adjusted_points"] == [("2026-08-03", 9.), ("2026-08-04", 10.)]
+    assert a["points"] == [("2026-08-03", 10.0), ("2026-08-04", 11.0)]
+    assert a["adjusted_points"] == [("2026-08-03", 9.0), ("2026-08-04", 10.0)]
     assert a["currency"] == "GBP" and a["quote_currency"] == "GBp"
-    assert a["actions"] == [{"date": "2026-08-04", "dividends": 15., "capital_gains": 5., "stock_splits": 2.}]
+    assert a["actions"] == [
+        {"date": "2026-08-04", "dividends": 15.0, "capital_gains": 5.0, "stock_splits": 2.0}
+    ]
     assert a["status"] == "ok" and a["fetched_at"] == NOW.isoformat()
     assert b["status"] == "unavailable" and b["error"] == "Unknown share class"
 
@@ -73,7 +93,9 @@ def test_missing_adjustments_are_not_replaced_with_prices(history):
 
 
 def test_provider_failure_retains_stale_snapshot_and_rate_limit_stops_requests(history, catalogue):
-    first = dashboard.build_snapshot(catalogue, loader=lambda _: (history, {"currency": "USD"}), now=NOW)
+    first = dashboard.build_snapshot(
+        catalogue, loader=lambda _: (history, {"currency": "USD"}), now=NOW
+    )
     catalogue["instruments"].append({"id": "c", "name": "C", "category": "Shares", "symbol": "C"})
     loader = Mock(side_effect=YFRateLimitError())
     result = dashboard.build_snapshot(catalogue, loader=loader, previous=first)
@@ -105,15 +127,29 @@ def test_invalid_actions_do_not_publish_partially_valid_price_data(history, cata
     assert result["instruments"][0]["points"] == []
 
 
-def test_site_build_writes_downloadable_action_datasets_and_keeps_all_instruments(tmp_path, history, catalogue):
-    snapshot = dashboard.build_snapshot(catalogue, loader=lambda _: (history, {"currency": "GBp"}), now=NOW)
+def test_site_build_writes_downloadable_action_datasets_and_keeps_all_instruments(
+    tmp_path, history, catalogue
+):
+    snapshot = dashboard.build_snapshot(
+        catalogue, loader=lambda _: (history, {"currency": "GBp"}), now=NOW
+    )
     assets = Path(__file__).parents[1] / "dashboard"
     dashboard.write_site(snapshot, assets, tmp_path)
     result = json.loads((tmp_path / "prices.json").read_text())
     assert len(result["instruments"]) == 2
-    for path in ["index.html", "app.mjs", "styles.css", "comparison.mjs", ".nojekyll", "corporate-actions.csv", "corporate-actions.json"]:
+    for path in [
+        "index.html",
+        "app.mjs",
+        "styles.css",
+        "comparison.mjs",
+        ".nojekyll",
+        "corporate-actions.csv",
+        "corporate-actions.json",
+    ]:
         assert (tmp_path / path).is_file()
-    saved = ParquetStorage(tmp_path / "datasets").load_dataset(source="yfinance", dataset="corporate_actions", symbol="A.L")
+    saved = ParquetStorage(tmp_path / "datasets").load_dataset(
+        source="yfinance", dataset="corporate_actions", symbol="A.L"
+    )
     assert saved["dividends"].iloc[0] == 15
     assert saved.attrs["currency"] == "GBp"
     assert saved.index[0] == pd.Timestamp("2026-08-04", tz="UTC")
@@ -159,7 +195,12 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
             dashboard.load_catalogue(path)
     actual = dashboard.load_catalogue(Path(__file__).parents[1] / "config/simulated-companies.json")
     assert {i["symbol"] for i in actual["instruments"]} == {
-        "SIM-A", "SIM-B", "SIM-C", "SIM-D", "SIM-E", "SIM-F"
+        "SIM-A",
+        "SIM-B",
+        "SIM-C",
+        "SIM-D",
+        "SIM-E",
+        "SIM-F",
     }
     assert all(i["category"] == "Shares" for i in actual["instruments"])
     assert {i["name"] for i in actual["instruments"]} == {
@@ -168,8 +209,9 @@ def test_catalogue_validation_and_reviewed_universe(tmp_path, catalogue):
     assert all("source_url" not in i and "yahoo_url" not in i for i in actual["instruments"])
 
 
-
-def test_cli_writes_site_and_loads_optional_previous_snapshot(monkeypatch, tmp_path, catalogue, history):
+def test_cli_writes_site_and_loads_optional_previous_snapshot(
+    monkeypatch, tmp_path, catalogue, history
+):
     path = tmp_path / "catalogue.json"
     path.write_text(json.dumps(catalogue))
     snapshot = dashboard.build_snapshot(catalogue, loader=lambda _: (history, {"currency": "USD"}))
@@ -179,8 +221,21 @@ def test_cli_writes_site_and_loads_optional_previous_snapshot(monkeypatch, tmp_p
         previous = tmp_path / "previous.json"
         if exists:
             previous.write_text(json.dumps(snapshot))
-        dashboard.main(["--data-source", "yahoo", "--catalogue", str(path), "--output", str(tmp_path / "dist"), "--previous", str(previous)])
-        assert build.call_args.kwargs["previous"] == (json.loads(previous.read_text()) if exists else None)
+        dashboard.main(
+            [
+                "--data-source",
+                "yahoo",
+                "--catalogue",
+                str(path),
+                "--output",
+                str(tmp_path / "dist"),
+                "--previous",
+                str(previous),
+            ]
+        )
+        assert build.call_args.kwargs["previous"] == (
+            json.loads(previous.read_text()) if exists else None
+        )
     assert (tmp_path / "dist/refresh-status.json").exists()
 
 
@@ -227,8 +282,12 @@ def test_client_actions_are_historical_and_use_the_existing_storage_contract(his
     loader = Mock(return_value=history)
     client = YFinanceClient(history_loader=loader)
     actions = client.get_actions(" a.l ")
-    loader.assert_called_once_with("A.L", interval="1d", auto_adjust=False, actions=True, period="max")
-    path = ParquetStorage(tmp_path).save_dataset(actions, source="yfinance", dataset="corporate_actions")
+    loader.assert_called_once_with(
+        "A.L", interval="1d", auto_adjust=False, actions=True, period="max"
+    )
+    path = ParquetStorage(tmp_path).save_dataset(
+        actions, source="yfinance", dataset="corporate_actions"
+    )
     assert path == tmp_path / "raw/yfinance/corporate_actions/A.L.parquet"
     assert actions.attrs["currency"] == "GBp"
     client.get_actions("A.L", start="2020-01-01", end="2026-01-01")
@@ -239,7 +298,9 @@ def test_client_actions_are_historical_and_use_the_existing_storage_contract(his
 def test_client_actions_handle_provider_failures_and_empty_histories():
     for response in [pd.DataFrame(), None]:
         with pytest.raises(YFinanceError, match="availability is unknown"):
-            YFinanceClient(history_loader=lambda *_a, response=response, **_k: response).get_actions("A")
+            YFinanceClient(
+                history_loader=lambda *_a, response=response, **_k: response
+            ).get_actions("A")
     with pytest.raises(YFinanceError):
         YFinanceClient(history_loader=Mock(side_effect=OSError())).get_actions("A")
     with pytest.raises(ValueError):

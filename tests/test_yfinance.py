@@ -145,9 +145,7 @@ def test_get_distributions_accepts_dividends_dataframe_and_empty_result() -> Non
             "must not be negative",
         ),
         (
-            pd.DataFrame(
-                {"Other": [1.0]}, index=pd.DatetimeIndex(["2026-01-01"])
-            ),
+            pd.DataFrame({"Other": [1.0]}, index=pd.DatetimeIndex(["2026-01-01"])),
             "must contain Dividends",
         ),
     ],
@@ -166,25 +164,33 @@ def test_get_distributions_wraps_provider_errors() -> None:
         YFinanceClient(distribution_loader=broken).get_distributions("ABC")
 
 
-@pytest.mark.parametrize('explicit_range', [False, True])
+@pytest.mark.parametrize("explicit_range", [False, True])
 def test_default_distribution_loader_requests_unadjusted_actions(monkeypatch, explicit_range):
     captured = {}
+
     class Ticker:
         def history(self, **kwargs):
             captured.update(kwargs)
-            return pd.DataFrame({'Dividends': [0.25]}, index=pd.DatetimeIndex(['2026-01-15']))
-    monkeypatch.setattr('agentic_data_pipeline.ingestion.yfinance.yf.Ticker', lambda _: Ticker())
-    kwargs = {'start': '2026-01-01', 'end': '2026-02-01'} if explicit_range else {}
-    result = YFinanceClient().get_distributions('AAPL', **kwargs)
+            return pd.DataFrame({"Dividends": [0.25]}, index=pd.DatetimeIndex(["2026-01-15"]))
+
+    monkeypatch.setattr("agentic_data_pipeline.ingestion.yfinance.yf.Ticker", lambda _: Ticker())
+    kwargs = {"start": "2026-01-01", "end": "2026-02-01"} if explicit_range else {}
+    result = YFinanceClient().get_distributions("AAPL", **kwargs)
     assert result.cash_amount.tolist() == [0.25]
-    assert captured == {'actions': True, 'auto_adjust': False, **(kwargs or {'period': 'max'})}
+    assert captured == {"actions": True, "auto_adjust": False, **(kwargs or {"period": "max"})}
 
 
-@pytest.mark.parametrize('frame', [pd.DataFrame(), pd.DataFrame({'Close': [100]}, index=pd.DatetimeIndex(['2026-01-15']))])
-def test_default_distribution_loader_does_not_report_failed_history_as_no_dividends(monkeypatch, frame):
+@pytest.mark.parametrize(
+    "frame",
+    [pd.DataFrame(), pd.DataFrame({"Close": [100]}, index=pd.DatetimeIndex(["2026-01-15"]))],
+)
+def test_default_distribution_loader_does_not_report_failed_history_as_no_dividends(
+    monkeypatch, frame
+):
     class Ticker:
         def history(self, **kwargs):
             return frame
-    monkeypatch.setattr('agentic_data_pipeline.ingestion.yfinance.yf.Ticker', lambda _: Ticker())
-    with pytest.raises(YFinanceError, match='availability is unknown'):
-        YFinanceClient().get_distributions('AAPL')
+
+    monkeypatch.setattr("agentic_data_pipeline.ingestion.yfinance.yf.Ticker", lambda _: Ticker())
+    with pytest.raises(YFinanceError, match="availability is unknown"):
+        YFinanceClient().get_distributions("AAPL")

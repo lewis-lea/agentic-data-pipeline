@@ -48,9 +48,9 @@ def add_stock_metrics(
     result[f"sma_{long_window}"] = SMAIndicator(close, window=long_window).sma_indicator()
     result[f"ema_{short_window}"] = EMAIndicator(close, window=short_window).ema_indicator()
 
-    result[f"volatility_{volatility_window}"] = result["log_return"].rolling(
-        volatility_window
-    ).std()
+    result[f"volatility_{volatility_window}"] = (
+        result["log_return"].rolling(volatility_window).std()
+    )
     result[f"momentum_{momentum_window}"] = close.pct_change(momentum_window)
     result[f"rsi_{rsi_window}"] = RSIIndicator(close, window=rsi_window).rsi()
 
@@ -241,7 +241,9 @@ def _aligned_returns(
     if include_close:
         columns["asset_close"] = asset["close"].astype(float)
         columns["benchmark_close"] = benchmark["close"].astype(float)
-    return pd.concat(columns, axis=1, join="inner").dropna(subset=["asset_return", "benchmark_return"])
+    return pd.concat(columns, axis=1, join="inner").dropna(
+        subset=["asset_return", "benchmark_return"]
+    )
 
 
 def _capture_ratio(aligned: pd.DataFrame, mask: pd.Series) -> float:

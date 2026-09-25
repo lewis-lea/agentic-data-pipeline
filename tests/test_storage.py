@@ -36,9 +36,7 @@ def test_market_data_round_trip_uses_interval_first_layout(tmp_path):
     frame = _market_frame()
 
     path = storage.save_market_data(frame, source="yfinance", interval="1d")
-    loaded = storage.load_market_data(
-        source="yfinance", interval="1d", symbol="NVDA"
-    )
+    loaded = storage.load_market_data(source="yfinance", interval="1d", symbol="NVDA")
 
     assert path == tmp_path / "raw" / "yfinance" / "1d" / "NVDA.parquet"
     pdt.assert_frame_equal(loaded, frame)
@@ -60,13 +58,9 @@ def test_market_data_update_replaces_duplicate_timestamp(tmp_path):
     replacement = _market_frame().iloc[[0]].copy()
     replacement.loc[:, "close"] = 101.5
     replacement.attrs = dict(_market_frame().attrs)
-    storage.save_market_data(
-        replacement, source="yfinance", interval="1d", update=True
-    )
+    storage.save_market_data(replacement, source="yfinance", interval="1d", update=True)
 
-    loaded = storage.load_market_data(
-        source="yfinance", interval="1d", symbol="NVDA"
-    )
+    loaded = storage.load_market_data(source="yfinance", interval="1d", symbol="NVDA")
     assert len(loaded) == 1
     assert loaded.iloc[0]["close"] == 101.5
 
@@ -91,12 +85,8 @@ def test_qualitative_dataset_round_trip(tmp_path):
     )
     frame.attrs = {"symbol": "NVDA", "frequency": "monthly"}
 
-    path = storage.save_dataset(
-        frame, source="finnhub", dataset="recommendations"
-    )
-    loaded = storage.load_dataset(
-        source="finnhub", dataset="recommendations", symbol="NVDA"
-    )
+    path = storage.save_dataset(frame, source="finnhub", dataset="recommendations")
+    loaded = storage.load_dataset(source="finnhub", dataset="recommendations", symbol="NVDA")
 
     assert path == tmp_path / "raw" / "finnhub" / "recommendations" / "NVDA.parquet"
     pdt.assert_frame_equal(loaded, frame)
@@ -108,9 +98,7 @@ def test_qualitative_update_keeps_newest_duplicate(tmp_path):
     index = pd.DatetimeIndex(["2026-08-01T00:00:00Z"], name="timestamp")
     original = pd.DataFrame({"mspr": [5.0], "change": [10.0]}, index=index)
     original.attrs = {"symbol": "NVDA", "frequency": "monthly"}
-    storage.save_dataset(
-        original, source="finnhub", dataset="insider_sentiment"
-    )
+    storage.save_dataset(original, source="finnhub", dataset="insider_sentiment")
 
     update = pd.DataFrame({"mspr": [7.0], "change": [12.0]}, index=index)
     update.attrs = dict(original.attrs)
@@ -121,7 +109,5 @@ def test_qualitative_update_keeps_newest_duplicate(tmp_path):
         update=True,
     )
 
-    loaded = storage.load_dataset(
-        source="finnhub", dataset="insider_sentiment", symbol="NVDA"
-    )
+    loaded = storage.load_dataset(source="finnhub", dataset="insider_sentiment", symbol="NVDA")
     assert loaded.iloc[0]["mspr"] == 7.0

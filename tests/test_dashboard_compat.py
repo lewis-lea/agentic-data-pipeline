@@ -10,9 +10,7 @@ from agentic_data_pipeline.dashboard import build_dashboard_payload, build_dashb
 def test_build_dashboard_series_serializes_price_distribution_and_total_return() -> None:
     market = pd.DataFrame(
         {"close": [100.0, 95.0]},
-        index=pd.DatetimeIndex(
-            ["2026-01-01", "2026-01-02"], tz="UTC", name="timestamp"
-        ),
+        index=pd.DatetimeIndex(["2026-01-01", "2026-01-02"], tz="UTC", name="timestamp"),
     )
     distributions = pd.DataFrame(
         {"cash_amount": [5.0]},

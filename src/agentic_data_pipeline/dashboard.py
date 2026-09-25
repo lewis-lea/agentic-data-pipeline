@@ -54,8 +54,7 @@ def load_catalogue(path: Path) -> dict[str, Any]:
 def fetch_history(symbol: str) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Fetch ten years of daily closes and quote units without Finnhub calls."""
     ticker = yf.Ticker(symbol)
-    frame = ticker.history(period="10y", interval="1d", auto_adjust=False,
-                           actions=True, timeout=15)
+    frame = ticker.history(period="10y", interval="1d", auto_adjust=False, actions=True, timeout=15)
     return frame, ticker.history_metadata
 
 
@@ -81,14 +80,20 @@ def serialise_history(frame: pd.DataFrame, metadata: dict[str, Any]) -> dict[str
             value = float(close)
             if pd.notna(timestamp) and math.isfinite(value) and value > 0:
                 adjusted[timestamp.date().isoformat()] = round(value * factor, 8)
-    return {"currency": "GBP" if factor == 0.01 else currency,
-            "quote_currency": currency, "points": sorted(points.items()),
-            "adjusted_points": sorted(adjusted.items())}
+    return {
+        "currency": "GBP" if factor == 0.01 else currency,
+        "quote_currency": currency,
+        "points": sorted(points.items()),
+        "adjusted_points": sorted(adjusted.items()),
+    }
 
 
 def build_snapshot(
-    catalogue: dict[str, Any], *, loader: HistoryLoader = fetch_history,
-    previous: dict[str, Any] | None = None, now: datetime | None = None,
+    catalogue: dict[str, Any],
+    *,
+    loader: HistoryLoader = fetch_history,
+    previous: dict[str, Any] | None = None,
+    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Isolate provider failures and retain explicitly stale last-good histories."""
     timestamp = (now or datetime.now(UTC)).isoformat()
@@ -99,7 +104,14 @@ def build_snapshot(
     rate_limited = False
     for item in catalogue["instruments"]:
         result = dict(item)
-        result.update(status="unavailable", points=[], adjusted_points=[], actions=[], action_fields=[], fetched_at=None)
+        result.update(
+            status="unavailable",
+            points=[],
+            adjusted_points=[],
+            actions=[],
+            action_fields=[],
+            fetched_at=None,
+        )
         if not item.get("symbol"):
             result["error"] = item["mapping_note"]
         else:
@@ -113,25 +125,49 @@ def build_snapshot(
                 )
                 result.update(history, status="ok", fetched_at=timestamp)
                 result["action_fields"] = actions.attrs["available_fields"]
-                result["actions"] = [{"date": index.date().isoformat(),
-                    **{key: float(value) if pd.notna(value) else None
-                       for key, value in row.items()}} for index, row in actions.iterrows()]
+                result["actions"] = [
+                    {
+                        "date": index.date().isoformat(),
+                        **{
+                            key: float(value) if pd.notna(value) else None
+                            for key, value in row.items()
+                        },
+                    }
+                    for index, row in actions.iterrows()
+                ]
             except Exception as exc:
                 rate_limited = rate_limited or isinstance(exc, YFRateLimitError)
                 # Do not expose arbitrary provider responses in the public page.
-                result["error"] = ("Yahoo Finance rate limited this refresh."
-                                   if rate_limited else "Yahoo Finance history unavailable.")
+                result["error"] = (
+                    "Yahoo Finance rate limited this refresh."
+                    if rate_limited
+                    else "Yahoo Finance history unavailable."
+                )
                 LOGGER.warning("%s: %s", item["symbol"], type(exc).__name__)
                 cached = old.get(item["id"], {})
                 if cached.get("symbol") == item["symbol"] and cached.get("points"):
-                    for key in ("points", "adjusted_points", "currency", "quote_currency", "fetched_at", "actions", "action_fields"):
+                    for key in (
+                        "points",
+                        "adjusted_points",
+                        "currency",
+                        "quote_currency",
+                        "fetched_at",
+                        "actions",
+                        "action_fields",
+                    ):
                         result[key] = cached.get(key)
                     result["status"] = "stale"
         instruments.append(result)
-    return {"schema_version": 1, "generated_at": timestamp, "data_source": "yfinance", "synthetic": False,
-            "catalogue_checked_at": catalogue["checked_at"],
-            "price_basis": PRICE_BASIS, "sources": catalogue["sources"],
-            "instruments": instruments}
+    return {
+        "schema_version": 1,
+        "generated_at": timestamp,
+        "data_source": "yfinance",
+        "synthetic": False,
+        "catalogue_checked_at": catalogue["checked_at"],
+        "price_basis": PRICE_BASIS,
+        "sources": catalogue["sources"],
+        "instruments": instruments,
+    }
 
 
 def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
@@ -165,34 +201,89 @@ def write_site(snapshot: dict[str, Any], assets: Path, output: Path) -> None:
         if not item.get("points"):
             continue
         records = item.get("actions") or []
-        frame = pd.DataFrame(records, columns=["date", "dividends", "capital_gains", "stock_splits"])
+        frame = pd.DataFrame(
+            records, columns=["date", "dividends", "capital_gains", "stock_splits"]
+        )
         frame.index = pd.DatetimeIndex(pd.to_datetime(frame.pop("date"), utc=True), name="date")
-        frame.attrs = {"symbol": item["symbol"], "currency": item["quote_currency"],
-                       "available_fields": item.get("action_fields") or [],
-                       "fetched_at": item["fetched_at"], "status": item["status"],
-                       "date_semantics": "fictional ex-date" if source == "synthetic" else "exchange-local event/ex-date",
-                       "data_source": source, "synthetic": source == "synthetic",
-                       "value_basis": "Fictional simulated per-share cash" if source == "synthetic" else "Yahoo-reported per-share amounts; may be split-adjusted"}
+        frame.attrs = {
+            "symbol": item["symbol"],
+            "currency": item["quote_currency"],
+            "available_fields": item.get("action_fields") or [],
+            "fetched_at": item["fetched_at"],
+            "status": item["status"],
+            "date_semantics": "fictional ex-date"
+            if source == "synthetic"
+            else "exchange-local event/ex-date",
+            "data_source": source,
+            "synthetic": source == "synthetic",
+            "value_basis": "Fictional simulated per-share cash"
+            if source == "synthetic"
+            else "Yahoo-reported per-share amounts; may be split-adjusted",
+        }
         storage.save_dataset(frame, source=source, dataset="corporate_actions")
-        all_events.extend({"data_source": source, "synthetic": source == "synthetic", "symbol": item["symbol"], "currency": item["quote_currency"],
-                           "status": item["status"], "fetched_at": item["fetched_at"], **event}
-                          for event in records)
-    (output / "corporate-actions.json").write_text(json.dumps(
-        {"data_source": source, "synthetic": source == "synthetic",
-         "simulation": snapshot.get("simulation"), "generated_at": snapshot["generated_at"], "events": all_events,
-         "availability": [{"symbol": i.get("symbol"), "fields": i.get("action_fields"),
-                           "status": i["status"]} for i in snapshot["instruments"]]}, allow_nan=False))
-    pd.DataFrame(all_events, columns=["data_source", "synthetic", "symbol", "currency", "status", "fetched_at", "date",
-                                     "dividends", "capital_gains", "stock_splits"]).to_csv(
-                                         output / "corporate-actions.csv", index=False)
+        all_events.extend(
+            {
+                "data_source": source,
+                "synthetic": source == "synthetic",
+                "symbol": item["symbol"],
+                "currency": item["quote_currency"],
+                "status": item["status"],
+                "fetched_at": item["fetched_at"],
+                **event,
+            }
+            for event in records
+        )
+    (output / "corporate-actions.json").write_text(
+        json.dumps(
+            {
+                "data_source": source,
+                "synthetic": source == "synthetic",
+                "simulation": snapshot.get("simulation"),
+                "generated_at": snapshot["generated_at"],
+                "events": all_events,
+                "availability": [
+                    {
+                        "symbol": i.get("symbol"),
+                        "fields": i.get("action_fields"),
+                        "status": i["status"],
+                    }
+                    for i in snapshot["instruments"]
+                ],
+            },
+            allow_nan=False,
+        )
+    )
+    pd.DataFrame(
+        all_events,
+        columns=[
+            "data_source",
+            "synthetic",
+            "symbol",
+            "currency",
+            "status",
+            "fetched_at",
+            "date",
+            "dividends",
+            "capital_gains",
+            "stock_splits",
+        ],
+    ).to_csv(output / "corporate-actions.csv", index=False)
 
 
 def main(argv: list[str] | None = None) -> None:
     """Build simulated histories by default; real data requires an explicit option."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--catalogue", type=Path, help="Defaults to fictional companies in synthetic mode; required for Yahoo")
+    parser.add_argument(
+        "--catalogue",
+        type=Path,
+        help="Defaults to fictional companies in synthetic mode; required for Yahoo",
+    )
     parser.add_argument("--assets", type=Path, default=Path("dashboard"))
-    parser.add_argument("--output", type=Path, help="Default: dashboard-dist for synthetic; dashboard-local for Yahoo")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Default: dashboard-dist for synthetic; dashboard-local for Yahoo",
+    )
     parser.add_argument("--data-source", choices=("synthetic", "yahoo"), default="synthetic")
     parser.add_argument("--seed", type=int, default=2502026, help="Synthetic random seed")
     parser.add_argument("--previous", type=Path, help="Optional last-good prices.json")
@@ -202,7 +293,9 @@ def main(argv: list[str] | None = None) -> None:
             parser.error("--data-source yahoo requires an explicit --catalogue with real symbols")
         args.catalogue = Path("config/simulated-companies.json")
     if args.output is None:
-        args.output = Path("dashboard-dist" if args.data_source == "synthetic" else "dashboard-local")
+        args.output = Path(
+            "dashboard-dist" if args.data_source == "synthetic" else "dashboard-local"
+        )
     if args.data_source == "synthetic" and args.previous:
         parser.error("--previous is only supported with --data-source yahoo")
     previous = None
@@ -211,15 +304,25 @@ def main(argv: list[str] | None = None) -> None:
     catalogue = load_catalogue(args.catalogue)
     if args.data_source == "synthetic":
         from agentic_data_pipeline.synthetic import build_synthetic_snapshot
+
         snapshot = build_synthetic_snapshot(catalogue, seed=args.seed)
     else:
         snapshot = build_snapshot(catalogue, previous=previous)
     # Keep a diagnostics file even if all data failed and publication is refused.
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "refresh-status.json").write_text(json.dumps(
-        {"data_source": snapshot.get("data_source", "yfinance"), "generated_at": snapshot["generated_at"], "instruments": [
-            {key: row.get(key) for key in ("id", "symbol", "status", "error")}
-            for row in snapshot["instruments"]]}, indent=2))
+    (args.output / "refresh-status.json").write_text(
+        json.dumps(
+            {
+                "data_source": snapshot.get("data_source", "yfinance"),
+                "generated_at": snapshot["generated_at"],
+                "instruments": [
+                    {key: row.get(key) for key in ("id", "symbol", "status", "error")}
+                    for row in snapshot["instruments"]
+                ],
+            },
+            indent=2,
+        )
+    )
     write_site(snapshot, args.assets, args.output)
     available = sum(bool(row["points"]) for row in snapshot["instruments"])
     print(f"Published histories for {available}/{len(snapshot['instruments'])} investments")

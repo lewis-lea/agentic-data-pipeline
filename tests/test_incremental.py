@@ -63,9 +63,7 @@ def test_first_run_fetches_initial_period_and_persists(tmp_path: Path) -> None:
             "auto_adjust": False,
         }
     ]
-    assert storage.market_data_path(
-        source="yfinance", interval="1d", symbol="NVDA"
-    ).exists()
+    assert storage.market_data_path(source="yfinance", interval="1d", symbol="NVDA").exists()
 
 
 def test_update_starts_at_latest_persisted_timestamp_and_new_bar_wins(tmp_path: Path) -> None:
@@ -131,6 +129,4 @@ def test_incremental_ingestion_respects_interval_partition(tmp_path: Path) -> No
         client=client,
     )
 
-    assert storage.market_data_path(
-        source="yfinance", interval="1h", symbol="AAPL"
-    ).exists()
+    assert storage.market_data_path(source="yfinance", interval="1h", symbol="AAPL").exists()

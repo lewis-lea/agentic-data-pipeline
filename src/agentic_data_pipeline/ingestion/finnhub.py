@@ -167,9 +167,7 @@ class FinnhubClient:
             raise FinnhubApiError(f"invalid quote value: {exc}") from exc
 
     @staticmethod
-    def _normalize_recommendations(
-        payload: Sequence[JsonObject], symbol: str
-    ) -> pd.DataFrame:
+    def _normalize_recommendations(payload: Sequence[JsonObject], symbol: str) -> pd.DataFrame:
         rows: list[dict[str, Any]] = []
         index: list[pd.Timestamp] = []
         try:
@@ -241,9 +239,7 @@ class FinnhubClient:
         frame.attrs = {"symbol": symbol, "frequency": "monthly"}
         return frame
 
-    def _request_json(
-        self, url: str, params: Mapping[str, str], timeout: float
-    ) -> JsonPayload:
+    def _request_json(self, url: str, params: Mapping[str, str], timeout: float) -> JsonPayload:
         request = Request(
             f"{url}?{urlencode(params)}",
             headers={"Accept": "application/json", "X-Finnhub-Token": self.api_key},
@@ -262,7 +258,9 @@ class FinnhubClient:
             except (URLError, TimeoutError) as exc:
                 if attempt == 2:
                     detail = exc.reason if isinstance(exc, URLError) else exc
-                    raise FinnhubApiError(f"Could not reach Finnhub after retries: {detail}") from exc
+                    raise FinnhubApiError(
+                        f"Could not reach Finnhub after retries: {detail}"
+                    ) from exc
             except (json.JSONDecodeError, UnicodeDecodeError) as exc:
                 raise FinnhubApiError("Finnhub returned invalid JSON") from exc
             time.sleep(0.5 * (2**attempt))
