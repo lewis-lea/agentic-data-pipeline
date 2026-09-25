@@ -31,7 +31,10 @@ jobs:
         run: ~/.local/bin/uv sync --dev
 
       - name: Lint
-        run: ~/.local/bin/uv run ruff check src
+        run: ~/.local/bin/uv run ruff check src tests
+
+      - name: Format check
+        run: ~/.local/bin/uv run ruff format --check src tests
 
       - name: Type check
         run: ~/.local/bin/uv run pyright
