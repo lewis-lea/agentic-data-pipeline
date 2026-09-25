@@ -30,10 +30,7 @@ jobs:
       - name: Install dependencies
         run: ~/.local/bin/uv sync --dev
 
-      - name: Prepare test-results directory
-        run: mkdir -p test-results
-
-      # Unit tests deliberately exclude tests that call external services.
+      - name: Lint\n        run: ~/.local/bin/uv run ruff check src tests\n\n      - name: Type check\n        run: ~/.local/bin/uv run pyright\n\n      - name: Prepare test-results directory\n        run: mkdir -p test-results\n\n      # Unit tests deliberately exclude tests that call external services.
       - name: Run unit tests
         run: |
           set -o pipefail
