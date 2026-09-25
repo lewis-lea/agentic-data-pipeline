@@ -1,6 +1,6 @@
 """Tests for DuckDB bitemporal persistence."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -18,8 +18,8 @@ def _frame(close: float) -> pd.DataFrame:
 
 def test_duckdb_retains_versions_and_loads_latest(tmp_path) -> None:
     storage = DuckDBStorage(tmp_path / "market.duckdb")
-    first = datetime(2026, 1, 3, tzinfo=timezone.utc)
-    second = datetime(2026, 1, 4, tzinfo=timezone.utc)
+    first = datetime(2026, 1, 3, tzinfo=UTC)
+    second = datetime(2026, 1, 4, tzinfo=UTC)
     storage.save_market_data(_frame(101.0), source="yfinance", interval="1d", available_timestamp=first)
     storage.save_market_data(_frame(102.0), source="yfinance", interval="1d", update=True, available_timestamp=second)
     latest = storage.load_market_data(source="yfinance", interval="1d", symbol="NVDA")
@@ -32,9 +32,9 @@ def test_duckdb_retains_versions_and_loads_latest(tmp_path) -> None:
 def test_duckdb_as_of_prevents_future_knowledge(tmp_path) -> None:
     storage = DuckDBStorage(tmp_path / "market.duckdb")
     storage.save_market_data(_frame(101.0), source="yfinance", interval="1d",
-                             available_timestamp=datetime(2026, 1, 3, tzinfo=timezone.utc))
+                             available_timestamp=datetime(2026, 1, 3, tzinfo=UTC))
     storage.save_market_data(_frame(104.0), source="yfinance", interval="1d", update=True,
-                             available_timestamp=datetime(2026, 1, 5, tzinfo=timezone.utc))
+                             available_timestamp=datetime(2026, 1, 5, tzinfo=UTC))
     known = storage.load_market_data(source="yfinance", interval="1d", symbol="NVDA",
-                                     as_of=datetime(2026, 1, 4, tzinfo=timezone.utc))
+                                     as_of=datetime(2026, 1, 4, tzinfo=UTC))
     assert known.iloc[0]["close"] == 101.0
