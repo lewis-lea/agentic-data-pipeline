@@ -37,10 +37,11 @@ def create_corporate_actions(
     if np.isinf(values).any() or (values < 0).any():
         raise ValueError("Corporate-action values must be finite and non-negative")
     result = result.loc[result.fillna(0).ne(0).any(axis=1)]
-    if result.index.isna().any():
+    if result.index.isna().to_numpy().any():
         raise ValueError("Corporate-action dates must be valid")
     # Encode a trading-date label as UTC midnight, without shifting its date.
-    result.index = pd.DatetimeIndex(result.index.date, tz="UTC", name="date")
+    dates = [timestamp.date() for timestamp in result.index]
+    result.index = pd.DatetimeIndex(dates, tz="UTC", name="date")
     result = result[~result.index.duplicated(keep="last")].sort_index()
     result.attrs = {
         "symbol": symbol.strip().upper(),
