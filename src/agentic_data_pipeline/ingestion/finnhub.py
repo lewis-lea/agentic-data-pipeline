@@ -270,4 +270,8 @@ class FinnhubClient:
 
 
 def _optional_float(value: object) -> float | None:
-    return None if value is None else float(value)
+    if value is None:
+        return None
+    if not isinstance(value, (int, float, str)):
+        raise ValueError("optional numeric value must be a number or numeric string")
+    return float(value)
