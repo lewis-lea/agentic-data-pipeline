@@ -1,6 +1,6 @@
 """Tests for dashboard serialization helpers."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -49,7 +49,7 @@ def test_build_dashboard_payload_normalizes_timestamp_to_utc() -> None:
 
     aware = build_dashboard_payload(
         [],
-        generated_at=datetime(2026, 1, 1, 13, 30, tzinfo=timezone.utc),
+        generated_at=datetime(2026, 1, 1, 13, 30, tzinfo=UTC),
     )
     assert aware["generated_at"].endswith("+00:00")
 
