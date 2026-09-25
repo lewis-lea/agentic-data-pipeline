@@ -85,7 +85,7 @@ def update_yfinance_market_data(
     if existing.empty:
         raise ValueError("persisted market data must contain at least one observation")
 
-    start = existing.index.max()
+    start = pd.Timestamp(existing.index[-1])
     if end is not None:
         end_timestamp = pd.Timestamp(end)
         if end_timestamp.tzinfo is None:
@@ -170,7 +170,7 @@ def update_yfinance_distributions(
         symbol=normalized_symbol,
         layer=layer,
     )
-    start = existing.index.max() if not existing.empty else None
+    start = pd.Timestamp(existing.index[-1]) if not existing.empty else None
 
     if start is not None and end is not None:
         end_timestamp = pd.Timestamp(end)
