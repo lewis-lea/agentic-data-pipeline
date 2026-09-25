@@ -54,13 +54,18 @@ def build_return_history(
             raise ValueError("distributions must contain a cash_amount column")
 
         if not distributions.empty:
-            amounts = pd.to_numeric(distributions["cash_amount"], errors="coerce")
+            amounts = pd.Series(
+                pd.to_numeric(distributions["cash_amount"], errors="coerce"),
+                index=distributions.index,
+                dtype=float,
+            )
             if amounts.isna().any() or (~np.isfinite(amounts)).any() or (amounts < 0).any():
                 raise ValueError("cash_amount values must be non-negative and finite")
 
             grouped = amounts.groupby(distributions.index).sum().sort_index()
             for timestamp, amount in grouped.items():
-                position = market.index.searchsorted(timestamp, side="left")
+                distribution_timestamp = pd.Timestamp(timestamp)
+                position = market.index.searchsorted(distribution_timestamp, side="left")
                 if position < len(market.index):
                     cash.iloc[position] += float(amount)
 
